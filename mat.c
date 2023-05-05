@@ -553,8 +553,8 @@ matrix *makematrix() {
 
 	matrix *mat = malloc(sizeof(matrix));
 	matrix *last;
-	// row *prerowhead;
-	colm *precolhead;
+	row *prerowhead;
+	// colm *precolhead;
 	int i;
 
 	if (mat) {
@@ -567,11 +567,11 @@ matrix *makematrix() {
 		else
 			matrixhead = mat;
 
-		// prerowhead = addrow(mat, NULL, NULL);
-		precolhead = addcol(mat, NULL, NULL);
+		prerowhead = addrow(mat, NULL, NULL);
+		// precolhead = addcol(mat, NULL, NULL);
 		for(i=1;i<matrixlen;i++) {
-			// prerowhead = addrow(mat, prerowhead, NULL);
-			precolhead = addcol(mat, precolhead, NULL);
+			prerowhead = addrow(mat, prerowhead, NULL);
+		 	// precolhead = addcol(mat, precolhead, NULL);
 		}
 
 	} else {
