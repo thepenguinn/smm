@@ -47,11 +47,16 @@ matrix *matrixhead = NULL;
 unsigned int matrixlen = 4;
 unsigned int exitnow = 0;
 
+void disposerow(matrix *mat, row *currow);
+void disposecol(matrix *mat, colm *curcol);
 void disposecell(cell *cell);
-cell *getcell();
-matrix *makematrix();
 void printmatrix(matrix *mat);
+matrix *makematrix();
+cell *getcell();
+row *addrow(matrix *mat, row *rowabove, row *rowbelow);
 row *getrowhead();
+colm *addcol(matrix *mat, colm *leftcol, colm *rightcol);
+colm *getcolhead();
 
 // guess ill go to mars;
 
@@ -78,7 +83,6 @@ void disposecell(cell *cell) {
 	free(cell);
 
 }
-
 
 row *getrowhead() {
 
@@ -128,7 +132,7 @@ colm *addcol(matrix *mat, colm *leftcol, colm *rightcol) {
 			}
 			currowhead->rowmaxheight = 0;
 			currowhead->highcell = NULL;
-			currowhead->above = precolhead;
+			currowhead->above = prerowhead;
 			if (prerowhead) {
 				prerowhead->below = currowhead;
 			}
@@ -169,7 +173,7 @@ colm *addcol(matrix *mat, colm *leftcol, colm *rightcol) {
 			curcell->right = NULL;
 			curcell->left = leftcell;
 			curcell->below = NULL;
-			left->right = curcell;
+			leftcell->right = curcell;
 			curcell->value = 0;
 
 			precell = curcell;
@@ -247,6 +251,157 @@ colm *addcol(matrix *mat, colm *leftcol, colm *rightcol) {
 
 	newcol->cellstart = firstcell;
 	return newcol;
+
+}
+
+void disposecol(matrix *mat, colm *curcol) {
+
+	colm *leftcol, *rightcol;
+	cell *curcell, *precell, *leftcell, *rightcell;
+	row *currow, *prerow;
+
+	leftcol = curcol->left;
+	rightcol = curcol->right;
+
+	if (!leftcol && !rightcol) {
+
+		for (currow=mat->rowstart;currow;) {
+			prerow = currow;
+			curcell = currow->cellstart;
+			currow = currow->below;
+			disposecell(curcell);
+			free(prerow);
+		}
+
+		free(curcol);
+		mat->rowstart = mat->colstart = NULL;
+
+	} else if (leftcol) {
+
+		leftcell = leftcol->cellstart;
+
+		for (curcell=curcol->cellstart;curcell;) {
+			precell = curcell;
+			leftcell->right = NULL;
+			leftcell = leftcell->below;
+			curcell = curcell->below;
+			disposecell(precell);
+		}
+
+		leftcol->right = NULL;
+		free(curcol);
+
+	} else if (rightcol) {
+
+		for (currow=mat->rowstart;currow;) {
+			curcell = currow->cellstart;
+			rightcell = curcell->right;
+			currow->cellstart = rightcell;
+			rightcell->left = NULL;
+			currow = currow->below;
+			disposecell(curcell);
+		}
+
+		mat->colstart = curcol->right;
+		free(curcol);
+
+	} else {
+
+		leftcell = leftcol->cellstart;
+		rightcell = rightcol->cellstart;
+
+		for (curcell = curcol->cellstart;curcell;) {
+			leftcell->right = rightcell;
+			rightcell->left = leftcell;
+
+			precell = curcell;
+			leftcell = leftcell->below;
+			rightcell = rightcell->below;
+			curcell = curcell->below;
+
+			disposecell(precell);
+		}
+		leftcol->right = rightcol;
+		rightcol->left = leftcol;
+
+		free(curcol);
+	}
+
+}
+
+void disposerow(matrix *mat, row *currow) {
+
+	row *rowbelow, *rowabove;
+	cell *curcell, *precell, *cellabove, *cellbelow;
+	colm *curcol, *precol;
+
+	rowabove = currow->above;
+	rowbelow = currow->below;
+
+	if (!rowabove && !rowbelow) {
+
+		for (curcol=mat->colstart;curcol;) {
+			precol = curcol;
+			curcell = curcol->cellstart;
+			curcol = curcol->right;
+			disposecell(curcell);
+			free(precol);
+		}
+
+		free(currow);
+		mat->rowstart = mat->colstart = NULL;
+
+	} else if (rowabove) {
+
+		cellabove = rowabove->cellstart;
+
+		for (curcell=currow->cellstart;curcell;) {
+			precell = curcell;
+			cellabove->below = NULL;
+			cellabove = cellabove->right;
+			curcell = curcell->right;
+			disposecell(precell);
+		}
+
+		rowabove->below = NULL;
+		free(currow);
+
+	} else if (rowbelow) {
+
+		for (curcol=mat->colstart;curcol;) {
+			curcell = curcol->cellstart;
+			cellbelow = curcell->below;
+			curcol->cellstart = cellbelow;
+			cellbelow->above = NULL;
+			curcol = curcol->right;
+			disposecell(curcell);
+		}
+
+		mat->rowstart = currow->below;
+		free(currow);
+
+	} else {
+
+		cellabove = rowabove->cellstart;
+		cellbelow = rowbelow->cellstart;
+
+		for (curcell = currow->cellstart;curcell;) {
+			cellabove->below = cellbelow;
+			cellbelow->above = cellabove;
+
+			precell = curcell;
+			cellabove = cellabove->right;
+			cellbelow = cellbelow->right;
+			curcell = curcell->right;
+
+			disposecell(precell);
+		}
+		rowabove->below = rowbelow;
+		rowbelow->above = rowabove;
+
+		free(currow);
+	}
+
 }
 
 row *addrow(matrix *mat, row *rowabove, row *rowbelow) {
@@ -398,7 +553,8 @@ matrix *makematrix() {
 
 	matrix *mat = malloc(sizeof(matrix));
 	matrix *last;
-	row *prerowhead;
+	// row *prerowhead;
+	colm *precolhead;
 	int i;
 
 	if (mat) {
@@ -411,9 +567,11 @@ matrix *makematrix() {
 		else
 			matrixhead = mat;
 
-		prerowhead = addrow(mat, NULL, NULL);
+		// prerowhead = addrow(mat, NULL, NULL);
+		precolhead = addcol(mat, NULL, NULL);
 		for(i=1;i<matrixlen;i++) {
-			prerowhead = addrow(mat, prerowhead, NULL);
+			// prerowhead = addrow(mat, prerowhead, NULL);
+			precolhead = addcol(mat, precolhead, NULL);
 		}
 
 	} else {
