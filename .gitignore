@@ -2,4 +2,5 @@ a.out
 test.c
 smm
 *.o
+*.log
 

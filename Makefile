@@ -1,7 +1,13 @@
 # A simple makefile
 
-smm: mat.o
-	gcc -o $@ -lncurses mat.o
+smm: smm.o matrix.o drw.o
+	gcc -o $@ -lncurses smm.o matrix.o drw.o
 
-mat.o: mat.c
-	gcc -c -lncurses mat.c
+smm.o: smm.c matrix.h drw.h
+	gcc -c -lncurses smm.c
+
+matrix.o: matrix.c matrix.h drw.h
+	gcc -c matrix.c
+
+drw.o: drw.c matrix.h drw.h
+	gcc -c -lncurses drw.c
