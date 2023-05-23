@@ -16,28 +16,31 @@ char char_pipe[]   = "┃" ;
 char char_space    = ' ' ;
 */
 
-#define CHAR_CORNER_TOPLEFT	  0
-#define CHAR_CORNER_TOPRIGHT  1
-#define CHAR_CORNER_BOTRIGHT  2
-#define CHAR_CORNER_BOTLEFT   3
-#define CHAR_EDGE_TOP         4
-#define CHAR_EDGE_RIGHT       5
-#define CHAR_EDGE_BOT         6
-#define CHAR_EDGE_LEFT        7
-#define CHAR_MINUS            8
-#define CHAR_PIPE             9
-#define CHAR_CROSS           10
-
-#define TOPLEFT_CORNER        0
-#define TOPRIGHT_CORNER       1
-#define BOTRIGHT_CORNER       2
-#define BOTLEFT_CORNER        3
-#define TOP_EDGE              4
-#define RIGHT_EDGE            5
-#define BOT_EDGE              6
-#define LEFT_EDGE             7
-
+/*
 char *char_symbols[] = { 
+	[CHAR_CORNER_TOPLEFT]   = "+",
+	[CHAR_CORNER_TOPRIGHT]  = "+",
+	[CHAR_CORNER_BOTRIGHT]  = "+",
+	[CHAR_CORNER_BOTLEFT]   = "+",
+	[CHAR_EDGE_TOP]         = "-",
+	[CHAR_EDGE_RIGHT]       = "|",
+	[CHAR_EDGE_BOT]         = "-",
+	[CHAR_EDGE_LEFT]        = "|",
+	[CHAR_MINUS]            = "-",
+	[CHAR_PIPE]             = "|",
+	[CHAR_CROSS]            = "+"
+};
+*/
+
+/*
+ * TODO: Need to make these as variables so they can be tweaked from the
+ * command line arguments and config file
+ *
+ * Or let the user specify their own characters to draw the seperators
+ * and the box.
+ * */
+
+static const char *char_symbols[CHAR_END] = {
 	[CHAR_CORNER_TOPLEFT]   = "┌",
 	[CHAR_CORNER_TOPRIGHT]  = "┐",
 	[CHAR_CORNER_BOTRIGHT]  = "┘",
@@ -51,14 +54,63 @@ char *char_symbols[] = {
 	[CHAR_CROSS]            = "┼"
 };
 
-char char_top_l[]  = "┌" ;
-char char_top_r[]  = "┐" ;
-char char_bot_l[]  = "└" ;
-char char_bot_r[]  = "┘" ;
-char char_minus[]  = "─" ;
-char char_pipe[]   = "│" ;
-char char_cross[]  = "┼" ;
-char char_space    = ' ' ;
+
+static char *colors[COLOR_END] = {
+	[COLOR_BRT_PINK]     = "#EF6FF9",
+	[COLOR_BRT_YELLOW]   = "#EBF980",
+	[COLOR_BRT_WHITE]    = "#DDDDDD",
+	[COLOR_BRT_GREY]     = "#616162",
+	[COLOR_BRT_GREEN]    = "#10AF76",
+	[COLOR_BRT_VIOLET]   = "#7571F9",
+	[COLOR_DIM_PINK]     = "#AD58B3",
+	[COLOR_DIM_WHITE]    = "#979797",
+	[COLOR_DIM_GREY]     = "#3C3C3A",
+	[COLOR_DIM_GREEN]    = "#036B46",
+	[COLOR_DIM_VIOLET]   = "#514CC0",
+	[COLOR_DIM_BROWN]    = "#3C3C3A",
+};
+
+static int16_t color_pairs[PAIR_END][2] = {
+	[PAIR_BRT_YELLOW_BRT_PINK]   = { COLOR_BRT_YELLOW, COLOR_BRT_PINK,   },
+	[PAIR_BRT_PINK_DEFAULT_BG]   = { COLOR_BRT_PINK,   COLOR_DEFAULT_BG, },
+	[PAIR_BRT_WHITE_DEFAULT_BG]  = { COLOR_BRT_WHITE,  COLOR_DEFAULT_BG, },
+	[PAIR_BRT_GREY_DEFAULT_BG]   = { COLOR_BRT_GREY,   COLOR_DEFAULT_BG, },
+	[PAIR_BRT_GREEN_DEFAULT_BG]  = { COLOR_BRT_GREEN,  COLOR_DEFAULT_BG, },
+	[PAIR_BRT_VIOLET_DEFAULT_BG] = { COLOR_BRT_VIOLET, COLOR_DEFAULT_BG, },
+	[PAIR_DIM_PINK_DEFAULT_BG]   = { COLOR_DIM_PINK,   COLOR_DEFAULT_BG, },
+	[PAIR_DIM_WHITE_DEFAULT_BG]  = { COLOR_DIM_WHITE,  COLOR_DEFAULT_BG, },
+	[PAIR_DIM_GREY_DEFAULT_BG]   = { COLOR_DIM_GREY,   COLOR_DEFAULT_BG, },
+	[PAIR_DIM_GREEN_DEFAULT_BG]  = { COLOR_DIM_GREEN,  COLOR_DEFAULT_BG, },
+	[PAIR_DIM_VIOLET_DEFAULT_BG] = { COLOR_DIM_VIOLET, COLOR_DEFAULT_BG, },
+	[PAIR_DIM_BROWN_DEFAULT_BG]  = { COLOR_DIM_BROWN,  COLOR_DEFAULT_BG, },
+};
+
+static int color_schemes[SCHEME_END][ELEMENT_END] = {
+	[SCHEME_DEFAULT] = {
+		[ELEMENT_TITLE]                   = COLOR_PAIR(PAIR_BRT_YELLOW_BRT_PINK),
+		[ELEMENT_SECTION_NORMAL]          = COLOR_PAIR(PAIR_DIM_GREY_DEFAULT_BG),
+		[ELEMENT_SECTION_SELECTED]        = COLOR_PAIR(PAIR_BRT_GREY_DEFAULT_BG),
+		[ELEMENT_MAIN_TITLE_NORMAL]       = COLOR_PAIR(PAIR_BRT_WHITE_DEFAULT_BG),
+		[ELEMENT_MAIN_TITLE_SELECTED]     = COLOR_PAIR(PAIR_BRT_PINK_DEFAULT_BG),
+		[ELEMENT_MAIN_INFO_NORMAL]        = COLOR_PAIR(PAIR_DIM_WHITE_DEFAULT_BG),
+		[ELEMENT_MAIN_INFO_SELECTED]      = COLOR_PAIR(PAIR_DIM_PINK_DEFAULT_BG),
+		[ELEMENT_MATRIX_NORMAL]           = COLOR_PAIR(PAIR_DIM_WHITE_DEFAULT_BG),
+		[ELEMENT_MATRIX_SELECTED]         = COLOR_PAIR(PAIR_BRT_WHITE_DEFAULT_BG),
+		[ELEMENT_MATRIX_SEPERATOR]        = COLOR_PAIR(PAIR_DIM_BROWN_DEFAULT_BG),
+		[ELEMENT_DOTS_NORMAL]             = COLOR_PAIR(PAIR_DIM_GREY_DEFAULT_BG),
+		[ELEMENT_DOTS_SELECTED]           = COLOR_PAIR(PAIR_DIM_WHITE_DEFAULT_BG),
+		[ELEMENT_STASHED_TITLE_NORMAL]    = COLOR_PAIR(PAIR_BRT_VIOLET_DEFAULT_BG),
+		[ELEMENT_STASHED_TITLE_SELECTED]  = COLOR_PAIR(PAIR_BRT_PINK_DEFAULT_BG),
+		[ELEMENT_STASHED_INFO_NORMAL]     = COLOR_PAIR(PAIR_DIM_VIOLET_DEFAULT_BG),
+		[ELEMENT_STASHED_INFO_SELECTED]   = COLOR_PAIR(PAIR_DIM_PINK_DEFAULT_BG),
+		[ELEMENT_HELP_STASH_KEY]          = COLOR_PAIR(PAIR_BRT_GREEN_DEFAULT_BG),
+		[ELEMENT_HELP_STASH_ACTION]       = COLOR_PAIR(PAIR_DIM_GREEN_DEFAULT_BG),
+		[ELEMENT_HELP_OTHER_KEYS]         = COLOR_PAIR(PAIR_BRT_GREY_DEFAULT_BG),
+		[ELEMENT_HELP_OTHER_ACTIONS]      = COLOR_PAIR(PAIR_DIM_GREY_DEFAULT_BG),
+	},
+	/* we will set this later */
+	//[SCHEME_MONOCHROME] = NULL,
+};
 
 /*
 ─ ━ │ ┃ ┄ ┅ ┆ ┇ ┈ ┉ ┊ ┋ ┌ ┍ ┎ ┏
@@ -68,8 +120,9 @@ U+253x    ┰ ┱ ┲ ┳ ┴ ┵ ┶ ┷ ┸ ┹ ┺ ┻ ┼ ┽ ┾ ┿
 U+254x    ╀ ╁ ╂ ╃ ╄ ╅ ╆ ╇ ╈ ╉ ╊ ╋ ╌ ╍ ╎ ╏
 U+255x    ═ ║ ╒ ╓ ╔ ╕ ╖ ╗ ╘ ╙ ╚ ╛ ╜ ╝ ╞ ╟
 U+256x    ╠ ╡ ╢ ╣ ╤ ╥ ╦ ╧ ╨ ╩ ╪ ╫ ╬ ╭ ╮ ╯
+U+257x    ╰ ╱╳ ╲ ╳ ╴ ╵ ╶ ╷ ╸ ╹ ╺ ╻ ╼ ╽ ╾ ╿
 U+257x    ╰ ╱ ╲ ╳ ╴ ╵ ╶ ╷ ╸ ╹ ╺ ╻ ╼ ╽ ╾ ╿
-Notes
+Notes            ╳
   │
 ──┼────
   │
@@ -80,6 +133,34 @@ void drwcell(WINDOW *win, matrix *mat) {
 
 
 }
+
+void init_colorschemes() {
+
+	char *hexstring;
+	int r, g, b;
+	int i;
+
+	start_color();
+	use_default_colors();
+
+	/* initializing colors */
+
+	for (i = 0;i < COLOR_END; i++) {
+		hexstring = colors[i];
+		if (*hexstring == '#')
+			hexstring++;
+
+		sscanf(hexstring, "%02x%02x%02x", &r, &g, &b);
+		init_color(i, r*1000/255, g*1000/255, b*1000/255);
+	}
+
+	/* initializing color pairs */
+
+	for (i = 0;i < PAIR_END;i++)
+		init_pair(i, color_pairs[i][0], color_pairs[i][1]);
+
+}
+
 
 static void actualdrwcell() {
 
@@ -102,7 +183,7 @@ void drw_row_seperator(WINDOW *win, colm *colstart, colm *colend, const char *wi
 
 }
 
-static void set_symbols(row *rowstart, row *rowend, colm *colstart, colm *colend, char *symbols[]) {
+static void set_symbols(row *rowstart, row *rowend, colm *colstart, colm *colend, const char *symbols[]) {
 
 	/* 
 	 * I know this is probably inefficient but I think this is more readable I guess.... :)
@@ -163,9 +244,9 @@ void drw_row(WINDOW *win, colm *colstart, colm *colend, cell *cellstart) {
 
 	if (colstart && colstart->left != colend) {
 
-		wattron(win, COLOR_PAIR(5));
+		wattron(win, color_schemes[SCHEME_DEFAULT][ELEMENT_MATRIX_NORMAL]);
 		wprintw(win, " %*ld ", colstart->width, cellstart->value);
-		wattron(win, COLOR_PAIR(4));
+		wattron(win, color_schemes[SCHEME_DEFAULT][ELEMENT_MATRIX_SEPERATOR]);
 
 		colstart = colstart->right;
 		cellstart = cellstart->right;
@@ -174,9 +255,9 @@ void drw_row(WINDOW *win, colm *colstart, colm *colend, cell *cellstart) {
 	while (colstart && colstart->left != colend) {
 		wprintw(win, "%s", char_symbols[CHAR_PIPE]);
 
-		wattron(win, COLOR_PAIR(5));
+		wattron(win, color_schemes[SCHEME_DEFAULT][ELEMENT_MATRIX_NORMAL]);
 		wprintw(win, " %*ld ", colstart->width, cellstart->value);
-		wattron(win, COLOR_PAIR(4));
+		wattron(win, color_schemes[SCHEME_DEFAULT][ELEMENT_MATRIX_SEPERATOR]);
 
 		colstart = colstart->right;
 		cellstart = cellstart->right;
@@ -198,14 +279,14 @@ void drwmatrix(WINDOW *win, matrix *mat) {
 	struct colm *colstart, *colend;
 	struct row *rowstart, *rowend;
 
-	char *symbols[8];
+	const char *symbols[8];
 
 	if (!mat)
 		return;
 
 	getmaxyx(win, ymax, xmax);
 
-	wattron(win, COLOR_PAIR(4));
+	wattron(win, color_schemes[SCHEME_DEFAULT][ELEMENT_MATRIX_SEPERATOR]);
 
 	/* its the number of cols and rows but cords starts with 0 */
 	xmax--;
@@ -358,13 +439,11 @@ void drwtopwin(WINDOW *win) {
 
 	// init_pair(5, COLOR_WHITE, COLOR_BLUE);
 	// init_pair(5, COLOR_WHITE, COLOR_BLUE);
-	wattron(win, COLOR_PAIR(5) | A_BOLD);
 
 	// tee = wattr_get(win, );
 	wmove(win, 0, 0);
 	wprintw(win, "%s", name);
 	wattroff(win, A_BOLD);
-	wattron(win, COLOR_PAIR(3));
 	wmove(win, 2, 0);
 	wprintw(win, "%s", "local | stashed | news");
 

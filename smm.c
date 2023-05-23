@@ -3,7 +3,6 @@
 #include<ncurses.h>
 #include<stdint.h>
 
-
 #include "matrix.h"
 #include "drw.h"
 
@@ -26,7 +25,9 @@ int main () {
 	noecho();
 	keypad(stdscr, TRUE);
 	if (has_colors())
-		start_color();
+		init_colorschemes();
+
+	curs_set(0);
 
 	getmaxyx(stdscr, y, x);
 	topwin = newwin(3, x, 0, 0);
@@ -34,21 +35,11 @@ int main () {
 	botwin = newwin(3, x, y - 3, 0);
 
 	mat = makematrix(6, 6);
-	use_default_colors();
 	//  init_color(17, 1000, 112, 1000);
 	//  init_color(18, 120, 112, 190);
 	//  init_pair(20, 18, 17);
-	init_color(20, 238, 238, 234);
+	// init_color(20, 238, 238, 234);
 
-
-	init_pair(1, COLOR_RED, -1);
-	init_pair(2, COLOR_BLUE, -1);
-	init_pair(3, COLOR_BLUE, -1);
-	init_pair(4, 20, -1);
-	init_pair(5, COLOR_WHITE, -1);
-	init_pair(6, COLOR_WHITE, COLOR_BLACK);
-	curs_set(2);
-	wattron(mainwin, COLOR_PAIR(1));
 
 	row *currow;
 	for(curcol = mat->colstart;curcol->right;curcol = curcol->right);
@@ -58,6 +49,31 @@ int main () {
 	wrefresh(mainwin);
 	while ((ch = wgetch(mainwin)) != 'q') {
 
+		switch (ch) {
+			case 'h':
+				if (curcol->right)
+					disposecol(mat, curcol->right);
+				// change_cell_attr(mainwin, mat, A_NORMAL);
+				// fputs("\033[6 q", stdout);
+				// fflush(stdout);
+				break;
+			case 'l':
+				addcol(mat, curcol, curcol->right);
+				// change_cell_attr(mainwin, mat, A_BOLD);
+				// fputs("\033[2 q", stdout);
+				// fflush(stdout);
+				// wprintw(mainwin, "\033[2 q");
+				// printf("\033[2 q");
+				break;
+			case 'j':
+				if (currow->below)
+					disposerow(mat, currow->below);
+				break;
+			case 'k':
+				addrow(mat, currow, currow->below);
+				break;
+
+		}
 
 		colm *debugcol;
 		int anum = 1;
@@ -94,31 +110,6 @@ int main () {
 		drwmatrix(mainwin, mat);
 		// attron(COLOR_PAIR(20));
 		// printw("x --> %d, and y --> %d\n", x, y);
-		switch (ch) {
-			case 'h':
-				// if (curcol->right)
-				// disposecol(mat, curcol->right);
-				change_cell_attr(mainwin, mat, A_NORMAL);
-				fputs("\033[6 q", stdout);
-				fflush(stdout);
-				break;
-			case 'l':
-				// addcol(mat, curcol, curcol->right);
-				change_cell_attr(mainwin, mat, A_BOLD);
-				fputs("\033[2 q", stdout);
-				fflush(stdout);
-				// wprintw(mainwin, "\033[2 q");
-				// printf("\033[2 q");
-				break;
-			case 'k':
-				if (currow->below)
-					disposerow(mat, currow->below);
-				break;
-			case 'j':
-				addrow(mat, currow, currow->below);
-				break;
-
-		}
 
 		wrefresh(topwin);
 		wrefresh(botwin);
