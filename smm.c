@@ -5,8 +5,38 @@
 
 #include "matrix.h"
 #include "drw.h"
+#include "smm.h"
 
 // guess ill go to mars;
+
+static int main_window_content = MAIN_MENU;
+
+
+void normal_mode() {
+
+}
+
+void resize_windows() {
+
+	int xmax, ymax;
+
+	getmaxyx(stdscr, ymax, xmax);
+
+	werase(stdscr);
+	wrefresh(stdscr);
+
+	wresize(topwin, topwin_nlines, xmax - (2 * edge_pad_vertical));
+
+	wresize(mainwin, ymax - (topwin_nlines + botwin_nlines)
+			- (2 * edge_pad_horizontal) - (2 * mainwin_pad_horizontal),
+			xmax - (2 * edge_pad_vertical));
+
+	wresize(botwin, botwin_nlines, xmax - (2 * edge_pad_vertical));
+
+	mvwin(botwin, ymax - botwin_nlines - edge_pad_horizontal, edge_pad_vertical);
+
+}
+
 
 
 int main () {
@@ -14,11 +44,10 @@ int main () {
 	matrix *mat;
 	int x, y;
 	int change = 0;
-	WINDOW *topwin, *botwin, *mainwin;
 	/*debugging*/
 	int shit;
 	colm *curcol;
-	char ch;
+	int ch;
 	
 	initscr();
 	clear();
@@ -30,9 +59,22 @@ int main () {
 	curs_set(0);
 
 	getmaxyx(stdscr, y, x);
-	topwin = newwin(3, x, 0, 0);
-	mainwin = newwin(y - 6, x, 3, 0);
-	botwin = newwin(3, x, y - 3, 0);
+
+	topwin = newwin(topwin_nlines,
+			x - (2 * edge_pad_vertical),
+			edge_pad_horizontal,
+			edge_pad_vertical);
+
+	mainwin = newwin(y - (topwin_nlines + botwin_nlines)
+			- (2 * edge_pad_horizontal) - (2 * mainwin_pad_horizontal),
+			x - (2 * edge_pad_vertical),
+			edge_pad_horizontal + topwin_nlines + mainwin_pad_horizontal,
+			edge_pad_vertical);
+
+	botwin = newwin(botwin_nlines,
+			x - (2 * edge_pad_vertical),
+			y - botwin_nlines - edge_pad_horizontal,
+			edge_pad_vertical);
 
 	mat = makematrix(6, 6);
 	//  init_color(17, 1000, 112, 1000);
@@ -40,6 +82,19 @@ int main () {
 	//  init_pair(20, 18, 17);
 	// init_color(20, 238, 238, 234);
 
+	if (shit > 500)
+		shit = 0;
+	shit++;
+	mvwprintw(botwin, 0, 0, "hai this is botwin %d", shit);
+	shit++;
+	mvwprintw(botwin, 1, 0, "hai this is botwin %d", shit);
+	shit++;
+	mvwprintw(botwin, 2, 0, "hai this is botwin %d", shit);
+
+	drw_topwin(topwin);
+
+	wrefresh(topwin);
+	wrefresh(botwin);
 
 	row *currow;
 	for(curcol = mat->colstart;curcol->right;curcol = curcol->right);
@@ -72,6 +127,9 @@ int main () {
 			case 'k':
 				addrow(mat, currow, currow->below);
 				break;
+			case KEY_RESIZE:
+				resize_windows();
+				break;
 
 		}
 
@@ -87,15 +145,7 @@ int main () {
 
 		fprintf(stderr, "----\n");
 
-		getmaxyx(stdscr, y, x);
-
-		wresize(mainwin, y - 6, x);
-
-		wresize(topwin, 3, x);
-
-		wresize(botwin, 3, x);
-		mvwin(botwin, y - 3, 0);
-		drwtopwin(topwin);
+		drw_topwin(topwin);
 
 		if (shit > 500)
 			shit = 0;

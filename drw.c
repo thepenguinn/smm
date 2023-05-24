@@ -87,26 +87,26 @@ static int16_t color_pairs[PAIR_END][2] = {
 
 static int color_schemes[SCHEME_END][ELEMENT_END] = {
 	[SCHEME_DEFAULT] = {
-		[ELEMENT_TITLE]                   = COLOR_PAIR(PAIR_BRT_YELLOW_BRT_PINK),
-		[ELEMENT_SECTION_NORMAL]          = COLOR_PAIR(PAIR_DIM_GREY_DEFAULT_BG),
-		[ELEMENT_SECTION_SELECTED]        = COLOR_PAIR(PAIR_BRT_GREY_DEFAULT_BG),
-		[ELEMENT_MAIN_TITLE_NORMAL]       = COLOR_PAIR(PAIR_BRT_WHITE_DEFAULT_BG),
-		[ELEMENT_MAIN_TITLE_SELECTED]     = COLOR_PAIR(PAIR_BRT_PINK_DEFAULT_BG),
-		[ELEMENT_MAIN_INFO_NORMAL]        = COLOR_PAIR(PAIR_DIM_WHITE_DEFAULT_BG),
-		[ELEMENT_MAIN_INFO_SELECTED]      = COLOR_PAIR(PAIR_DIM_PINK_DEFAULT_BG),
-		[ELEMENT_MATRIX_NORMAL]           = COLOR_PAIR(PAIR_DIM_WHITE_DEFAULT_BG),
-		[ELEMENT_MATRIX_SELECTED]         = COLOR_PAIR(PAIR_BRT_WHITE_DEFAULT_BG),
-		[ELEMENT_MATRIX_SEPERATOR]        = COLOR_PAIR(PAIR_DIM_BROWN_DEFAULT_BG),
-		[ELEMENT_DOTS_NORMAL]             = COLOR_PAIR(PAIR_DIM_GREY_DEFAULT_BG),
-		[ELEMENT_DOTS_SELECTED]           = COLOR_PAIR(PAIR_DIM_WHITE_DEFAULT_BG),
-		[ELEMENT_STASHED_TITLE_NORMAL]    = COLOR_PAIR(PAIR_BRT_VIOLET_DEFAULT_BG),
-		[ELEMENT_STASHED_TITLE_SELECTED]  = COLOR_PAIR(PAIR_BRT_PINK_DEFAULT_BG),
-		[ELEMENT_STASHED_INFO_NORMAL]     = COLOR_PAIR(PAIR_DIM_VIOLET_DEFAULT_BG),
-		[ELEMENT_STASHED_INFO_SELECTED]   = COLOR_PAIR(PAIR_DIM_PINK_DEFAULT_BG),
-		[ELEMENT_HELP_STASH_KEY]          = COLOR_PAIR(PAIR_BRT_GREEN_DEFAULT_BG),
-		[ELEMENT_HELP_STASH_ACTION]       = COLOR_PAIR(PAIR_DIM_GREEN_DEFAULT_BG),
-		[ELEMENT_HELP_OTHER_KEYS]         = COLOR_PAIR(PAIR_BRT_GREY_DEFAULT_BG),
-		[ELEMENT_HELP_OTHER_ACTIONS]      = COLOR_PAIR(PAIR_DIM_GREY_DEFAULT_BG),
+		[ELEMENT_TITLE]                   = ColorPair(PAIR_BRT_YELLOW_BRT_PINK),
+		[ELEMENT_SECTION_NORMAL]          = ColorPair(PAIR_DIM_GREY_DEFAULT_BG),
+		[ELEMENT_SECTION_SELECTED]        = ColorPair(PAIR_BRT_GREY_DEFAULT_BG),
+		[ELEMENT_MAIN_TITLE_NORMAL]       = ColorPair(PAIR_BRT_WHITE_DEFAULT_BG),
+		[ELEMENT_MAIN_TITLE_SELECTED]     = ColorPair(PAIR_BRT_PINK_DEFAULT_BG),
+		[ELEMENT_MAIN_INFO_NORMAL]        = ColorPair(PAIR_DIM_WHITE_DEFAULT_BG),
+		[ELEMENT_MAIN_INFO_SELECTED]      = ColorPair(PAIR_DIM_PINK_DEFAULT_BG),
+		[ELEMENT_MATRIX_NORMAL]           = ColorPair(PAIR_DIM_WHITE_DEFAULT_BG),
+		[ELEMENT_MATRIX_SELECTED]         = ColorPair(PAIR_BRT_WHITE_DEFAULT_BG),
+		[ELEMENT_MATRIX_SEPERATOR]        = ColorPair(PAIR_DIM_BROWN_DEFAULT_BG),
+		[ELEMENT_DOTS_NORMAL]             = ColorPair(PAIR_DIM_GREY_DEFAULT_BG),
+		[ELEMENT_DOTS_SELECTED]           = ColorPair(PAIR_DIM_WHITE_DEFAULT_BG),
+		[ELEMENT_STASHED_TITLE_NORMAL]    = ColorPair(PAIR_BRT_VIOLET_DEFAULT_BG),
+		[ELEMENT_STASHED_TITLE_SELECTED]  = ColorPair(PAIR_BRT_PINK_DEFAULT_BG),
+		[ELEMENT_STASHED_INFO_NORMAL]     = ColorPair(PAIR_DIM_VIOLET_DEFAULT_BG),
+		[ELEMENT_STASHED_INFO_SELECTED]   = ColorPair(PAIR_DIM_PINK_DEFAULT_BG),
+		[ELEMENT_HELP_STASH_KEY]          = ColorPair(PAIR_BRT_GREEN_DEFAULT_BG),
+		[ELEMENT_HELP_STASH_ACTION]       = ColorPair(PAIR_DIM_GREEN_DEFAULT_BG),
+		[ELEMENT_HELP_OTHER_KEYS]         = ColorPair(PAIR_BRT_GREY_DEFAULT_BG),
+		[ELEMENT_HELP_OTHER_ACTIONS]      = ColorPair(PAIR_DIM_GREY_DEFAULT_BG),
 	},
 	/* we will set this later */
 	//[SCHEME_MONOCHROME] = NULL,
@@ -156,8 +156,15 @@ void init_colorschemes() {
 
 	/* initializing color pairs */
 
+	/*
+	 * Since we are using use_default_colors() from ncurses library, the zeroth
+	 * pair doesn't seems to be overriden by assigning a new pair to it.
+	 *
+	 * So instead of changing the zeroth pair we will start from 1
+	 * */
+
 	for (i = 0;i < PAIR_END;i++)
-		init_pair(i, color_pairs[i][0], color_pairs[i][1]);
+		init_pair(i + 1, color_pairs[i][0], color_pairs[i][1]);
 
 }
 
@@ -431,17 +438,12 @@ void drwmatrix(WINDOW *win, matrix *mat) {
 
 }
 
-void drwtopwin(WINDOW *win) {
+void drw_topwin(WINDOW *win) {
 
-	char *name = "smm\0";
-	// int tee;
+	char *name = " smm ";
 
-
-	// init_pair(5, COLOR_WHITE, COLOR_BLUE);
-	// init_pair(5, COLOR_WHITE, COLOR_BLUE);
-
-	// tee = wattr_get(win, );
 	wmove(win, 0, 0);
+	wattron(win, color_schemes[SCHEME_DEFAULT][ELEMENT_TITLE]);
 	wprintw(win, "%s", name);
 	wattroff(win, A_BOLD);
 	wmove(win, 2, 0);

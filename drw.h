@@ -12,7 +12,17 @@
 #define COLOR_DEFAULT_FG  -1
 
 /*
- * This will override the predefined colors from 1-7 in the ncurses library
+ * Since we are using use_default_colors() from ncurses library, the zeroth
+ * pair doesn't seems to be overriden by assigning a new pair to it.
+ *
+ * So instead of changing the zeroth pair we will start from 1
+ * */
+
+#define ColorPair(x) COLOR_PAIR((x)+1)
+
+
+/*
+ * This will override the predefined colors from 0-7 in the ncurses library
  * */
 
 enum Colors {
@@ -30,6 +40,9 @@ enum Colors {
 	COLOR_DIM_BROWN,
 	COLOR_END,
 };
+
+/*
+ * When using */
 
 enum ColorPairs {
 	/*   fg            bg    */
@@ -110,5 +123,5 @@ void drwmatrix(WINDOW *win, matrix *mat);
 void drwcell(WINDOW *win, matrix *mat);
 void drwrow(WINDOW *win, matrix *mat, colm *coltostart, cell *celltobegin, int seperator);
 void drwcol(WINDOW *win, matrix *mat);
-void drwtopwin(WINDOW *win);
+void drw_topwin(WINDOW *win);
 
