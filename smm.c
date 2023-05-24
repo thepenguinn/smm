@@ -6,6 +6,7 @@
 #include "matrix.h"
 #include "drw.h"
 #include "smm.h"
+#include "log.h"
 
 // guess ill go to mars;
 
@@ -48,6 +49,9 @@ int main () {
 	int shit;
 	colm *curcol;
 	int ch;
+
+	init_logger();
+	smm_log(DEBUG, "testing smm_log");
 	
 	initscr();
 	clear();
@@ -57,6 +61,7 @@ int main () {
 		init_colorschemes();
 
 	curs_set(0);
+
 
 	getmaxyx(stdscr, y, x);
 
@@ -132,18 +137,6 @@ int main () {
 				break;
 
 		}
-
-		colm *debugcol;
-		int anum = 1;
-
-		fprintf(stderr, "----\n");
-
-		for (debugcol = mat->colstart;debugcol;debugcol = debugcol->right) {
-			fprintf(stderr, "%d -> %p\n", anum, debugcol);
-			anum++;
-		}
-
-		fprintf(stderr, "----\n");
 
 		drw_topwin(topwin);
 

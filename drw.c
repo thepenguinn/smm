@@ -5,6 +5,7 @@
 
 #include "matrix.h"
 #include "drw.h"
+#include "log.h"
 
 /*
 char char_top_l[]  = "┏" ;
@@ -370,10 +371,6 @@ void drwmatrix(WINDOW *win, matrix *mat) {
 			break;
 	}
 	
-	fprintf(stderr, "rowstart -> %p\n", rowstart);
-	fprintf(stderr, "rowend -> %p\n", rowend);
-	fprintf(stderr, "colstart -> %p\n", colstart);
-	fprintf(stderr, "colend -> %p\n", colend);
 	begx = (xmax - mwidth) / 2;
 	begy = (ymax - mheight) / 2;
 

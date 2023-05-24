@@ -2,6 +2,7 @@
 #include<stdlib.h>
 
 #include "matrix.h"
+#include "log.h"
 
 #define DEFAULT_VALUE 0
 #define DEFAULT_ROW_HEIGHT 1
@@ -22,7 +23,7 @@ static cell *getcell() {
 	if (ccell)
 		return ccell;
 	else {
-		fprintf(stderr, "Couldn't allocate memory for cell\n");
+		smm_log(ERROR, "couldn't allocate memory for cell");
 		exit(EXIT_FAILURE);
 	}
 
@@ -45,7 +46,7 @@ static row *getrowhead() {
 	rowhead = malloc(sizeof(row));
 
 	if (!rowhead) {
-		fprintf(stderr, "Couldn't allocate memory for row\n");
+		smm_log(ERROR, "couldn't allocate memory for row");
 		exit(EXIT_FAILURE);
 	}
 
@@ -59,7 +60,7 @@ static colm *getcolhead() {
 	colhead = malloc(sizeof(colm));
 
 	if (!colhead) {
-		fprintf(stderr, "Couldn't allocate memory for column\n");
+		smm_log(ERROR, "couldn't allocate memory for column");
 		exit(EXIT_FAILURE);
 	}
 
