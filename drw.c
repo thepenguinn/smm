@@ -43,9 +43,13 @@ char *char_symbols[] = {
 
 static const char *char_symbols[CHAR_END] = {
 	[CHAR_CORNER_TOPLEFT]   = "┌",
+	// [CHAR_CORNER_TOPLEFT]   = "╭",
 	[CHAR_CORNER_TOPRIGHT]  = "┐",
+	// [CHAR_CORNER_TOPRIGHT]  = "╮",
 	[CHAR_CORNER_BOTRIGHT]  = "┘",
+	// [CHAR_CORNER_BOTRIGHT]  = "╯",
 	[CHAR_CORNER_BOTLEFT]   = "└",
+	// [CHAR_CORNER_BOTLEFT]   = "╰",
 	[CHAR_EDGE_TOP]         = "┬",
 	[CHAR_EDGE_RIGHT]       = "┤",
 	[CHAR_EDGE_BOT]         = "┴",
@@ -54,6 +58,22 @@ static const char *char_symbols[CHAR_END] = {
 	[CHAR_PIPE]             = "│",
 	[CHAR_CROSS]            = "┼"
 };
+
+/*
+─ ━ │ ┃ ┄ ┅ ┆ ┇ ┈ ┉ ┊ ┋ ┌ ┍ ┎ ┏
+U+251x    ┐ ┑ ┒ ┓ └ ┕ ┖ ┗ ┘ ┙ ┚ ┛ ├ ┝ ┞ ┟
+U+252x    ┠ ┡ ┢ ┣ ┤ ┥ ┦ ┧ ┨ ┩ ┪ ┫ ┬ ┭ ┮ ┯
+U+253x    ┰ ┱ ┲ ┳ ┴ ┵ ┶ ┷ ┸ ┹ ┺ ┻ ┼ ┽ ┾ ┿
+U+254x    ╀ ╁ ╂ ╃ ╄ ╅ ╆ ╇ ╈ ╉ ╊ ╋ ╌ ╍ ╎ ╏
+U+255x    ═ ║ ╒ ╓ ╔ ╕ ╖ ╗ ╘ ╙ ╚ ╛ ╜ ╝ ╞ ╟
+U+256x    ╠ ╡ ╢ ╣ ╤ ╥ ╦ ╧ ╨ ╩ ╪ ╫ ╬ ╭ ╮ ╯
+U+257x    ╰ ╱╳ ╲ ╳ ╴ ╵ ╶ ╷ ╸ ╹ ╺ ╻ ╼ ╽ ╾ ╿
+U+257x    ╰ ╱ ╲ ╳ ╴ ╵ ╶ ╷ ╸ ╹ ╺ ╻ ╼ ╽ ╾ ╿
+Notes            ╳
+  │
+──┼────
+  │
+  */
 
 
 static char *colors[COLOR_END] = {
@@ -113,23 +133,7 @@ static int color_schemes[SCHEME_END][ELEMENT_END] = {
 	//[SCHEME_MONOCHROME] = NULL,
 };
 
-/*
-─ ━ │ ┃ ┄ ┅ ┆ ┇ ┈ ┉ ┊ ┋ ┌ ┍ ┎ ┏
-U+251x    ┐ ┑ ┒ ┓ └ ┕ ┖ ┗ ┘ ┙ ┚ ┛ ├ ┝ ┞ ┟
-U+252x    ┠ ┡ ┢ ┣ ┤ ┥ ┦ ┧ ┨ ┩ ┪ ┫ ┬ ┭ ┮ ┯
-U+253x    ┰ ┱ ┲ ┳ ┴ ┵ ┶ ┷ ┸ ┹ ┺ ┻ ┼ ┽ ┾ ┿
-U+254x    ╀ ╁ ╂ ╃ ╄ ╅ ╆ ╇ ╈ ╉ ╊ ╋ ╌ ╍ ╎ ╏
-U+255x    ═ ║ ╒ ╓ ╔ ╕ ╖ ╗ ╘ ╙ ╚ ╛ ╜ ╝ ╞ ╟
-U+256x    ╠ ╡ ╢ ╣ ╤ ╥ ╦ ╧ ╨ ╩ ╪ ╫ ╬ ╭ ╮ ╯
-U+257x    ╰ ╱╳ ╲ ╳ ╴ ╵ ╶ ╷ ╸ ╹ ╺ ╻ ╼ ╽ ╾ ╿
-U+257x    ╰ ╱ ╲ ╳ ╴ ╵ ╶ ╷ ╸ ╹ ╺ ╻ ╼ ╽ ╾ ╿
-Notes            ╳
-  │
-──┼────
-  │
-  */
-
-void drwcell(WINDOW *win, matrix *mat) {
+void drw_cell(WINDOW *win, struct Matrix *mat) {
 
 
 
@@ -169,12 +173,8 @@ void init_colorschemes() {
 
 }
 
-
-static void actualdrwcell() {
-
-}
-
-void drw_row_seperator(WINDOW *win, colm *colstart, colm *colend, const char *widesymbol) {
+void drw_row_seperator(WINDOW *win,
+		struct Colm *colstart, struct Colm *colend, const char *widesymbol) {
 
 	int i;
 
@@ -191,7 +191,8 @@ void drw_row_seperator(WINDOW *win, colm *colstart, colm *colend, const char *wi
 
 }
 
-static void set_symbols(row *rowstart, row *rowend, colm *colstart, colm *colend, const char *symbols[]) {
+static void set_symbols(struct Row *rowstart, struct Row *rowend,
+		struct Colm *colstart, struct Colm *colend, const char *symbols[]) {
 
 	/* 
 	 * I know this is probably inefficient but I think this is more readable I guess.... :)
@@ -247,7 +248,8 @@ static void set_symbols(row *rowstart, row *rowend, colm *colstart, colm *colend
 
 }
 
-void drw_row(WINDOW *win, colm *colstart, colm *colend, cell *cellstart) {
+void drw_row(WINDOW *win,
+		struct Colm *colstart, struct Colm *colend, struct Cell *cellstart) {
 
 
 	if (colstart && colstart->left != colend) {
@@ -273,8 +275,8 @@ void drw_row(WINDOW *win, colm *colstart, colm *colend, cell *cellstart) {
 
 }
 
-// void drwmatrix(WINDOW *win, matrix *mat, colm *coltostart, colm *coltostop) {
-void drwmatrix(WINDOW *win, matrix *mat) {
+// void drw_matrix(WINDOW *win, struct Matrix *mat, struct Colm *coltostart, struct Colm *coltostop) {
+void drw_matrix(WINDOW *win, struct Matrix *mat) {
 
 	unsigned int xmax, ymax;
 	unsigned int begx, begy;
@@ -282,10 +284,10 @@ void drwmatrix(WINDOW *win, matrix *mat) {
 	unsigned int curx, cury;
 	unsigned int xstart, ystart;
 	unsigned int mwidth, mheight;
-	struct cell *curcell;
-	struct cell *cellstart;
-	struct colm *colstart, *colend;
-	struct row *rowstart, *rowend;
+	struct Cell *curcell;
+	struct Cell *cellstart;
+	struct Colm *colstart, *colend;
+	struct Row *rowstart, *rowend;
 
 	const char *symbols[8];
 
@@ -448,7 +450,7 @@ void drw_topwin(WINDOW *win) {
 
 }
 
-void change_cell_attr(WINDOW *win, matrix *mat, attr_t attr) {
+void change_cell_attr(WINDOW *win, struct Matrix *mat, attr_t attr) {
 	
 	unsigned int xmax, ymax;
 	unsigned int ccx, ccy;

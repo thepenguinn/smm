@@ -4,21 +4,17 @@
 #include "matrix.h"
 #include "log.h"
 
-#define DEFAULT_VALUE 0
-#define DEFAULT_ROW_HEIGHT 1
-#define DEFAULT_COL_WIDTH 3
-
-static cell *getcell();
-static void disposecell(cell *cell);
-static colm *getcolhead();
-static row *getrowhead();
+static void dispose_cell(struct Cell *cell);
+static struct Cell *get_cell();
+static struct Colm *get_colhead();
+static struct Row *get_rowhead();
 
 // guess ill go to mars;
 
-static cell *getcell() {
+static struct Cell *get_cell() {
 
-	cell *ccell;
-	ccell = malloc(sizeof(cell));
+	struct Cell *ccell;
+	ccell = malloc(sizeof(struct Cell));
 
 	if (ccell)
 		return ccell;
@@ -30,7 +26,7 @@ static cell *getcell() {
 	return ccell;
 }
 
-static void disposecell(cell *cell) {
+static void dispose_cell(struct Cell *cell) {
 
 	if (!cell)
 		return;
@@ -39,11 +35,11 @@ static void disposecell(cell *cell) {
 
 }
 
-static row *getrowhead() {
+static struct Row *get_rowhead() {
 
-	row *rowhead = NULL;
+	struct Row *rowhead = NULL;
 
-	rowhead = malloc(sizeof(row));
+	rowhead = malloc(sizeof(struct Row));
 
 	if (!rowhead) {
 		smm_log(ERROR, "couldn't allocate memory for row");
@@ -53,11 +49,11 @@ static row *getrowhead() {
 	return rowhead;
 }
 
-static colm *getcolhead() {
+static struct Colm *get_colhead() {
 
-	colm *colhead = NULL;
+	struct Colm *colhead = NULL;
 
-	colhead = malloc(sizeof(colm));
+	colhead = malloc(sizeof(struct Colm));
 
 	if (!colhead) {
 		smm_log(ERROR, "couldn't allocate memory for column");
@@ -67,17 +63,17 @@ static colm *getcolhead() {
 	return colhead;
 }
 
-colm *addcol(matrix *mat, colm *leftcol, colm *rightcol) {
+struct Colm *add_col(struct Matrix *mat, struct Colm *leftcol, struct Colm *rightcol) {
 
-	cell *firstcell = NULL, *leftcell, *rightcell;
-	cell *precell = NULL, *curcell;
-	row *currowhead, *firstrowhead, *prerowhead = NULL;
+	struct Cell *firstcell = NULL, *leftcell, *rightcell;
+	struct Cell *precell = NULL, *curcell;
+	struct Row *currowhead, *firstrowhead, *prerowhead = NULL;
 	unsigned int i;
 
 	if (!mat)
 		return NULL;
 
-	colm *newcol = getcolhead();
+	struct Colm *newcol = get_colhead();
 	newcol->width = DEFAULT_COL_WIDTH;
 	newcol->widecell = NULL;
 
@@ -91,7 +87,7 @@ colm *addcol(matrix *mat, colm *leftcol, colm *rightcol) {
 		 * */
 
 		for (;leftcell;) {
-			curcell = getcell();
+			curcell = get_cell();
 
 			curcell->above = precell;
 			if (!firstcell) {
@@ -123,7 +119,7 @@ colm *addcol(matrix *mat, colm *leftcol, colm *rightcol) {
 
 		for (;leftcell;leftcell = leftcell->below) {
 
-			curcell = getcell();
+			curcell = get_cell();
 
 			curcell->above = precell;
 			if (!firstcell) {
@@ -151,7 +147,7 @@ colm *addcol(matrix *mat, colm *leftcol, colm *rightcol) {
 		currowhead = mat->rowstart;
 
 		for (;rightcell;rightcell = rightcell->below) {
-			curcell = getcell();
+			curcell = get_cell();
 			curcell->above = precell;
 			if (currowhead) {
 				currowhead->cellstart = curcell;
@@ -181,8 +177,8 @@ colm *addcol(matrix *mat, colm *leftcol, colm *rightcol) {
 
 		for (i=mat->nrows;i;i--) {
 
-			currowhead = getrowhead();
-			curcell = getcell();
+			currowhead = get_rowhead();
+			curcell = get_cell();
 
 			currowhead->cellstart = curcell;
 			if (!firstrowhead) {
@@ -229,11 +225,11 @@ colm *addcol(matrix *mat, colm *leftcol, colm *rightcol) {
 
 }
 
-void disposecol(matrix *mat, colm *curcol) {
+void dispose_col(struct Matrix *mat, struct Colm *curcol) {
 
-	colm *leftcol, *rightcol;
-	cell *curcell, *precell, *leftcell, *rightcell;
-	row *currow, *prerow;
+	struct Colm *leftcol, *rightcol;
+	struct Cell *curcell, *precell, *leftcell, *rightcell;
+	struct Row *currow, *prerow;
 
 	leftcol = curcol->left;
 	rightcol = curcol->right;
@@ -252,7 +248,7 @@ void disposecol(matrix *mat, colm *curcol) {
 			rightcell = rightcell->below;
 			curcell = curcell->below;
 
-			disposecell(precell);
+			dispose_cell(precell);
 		}
 		leftcol->right = rightcol;
 		rightcol->left = leftcol;
@@ -268,7 +264,7 @@ void disposecol(matrix *mat, colm *curcol) {
 			leftcell->right = NULL;
 			leftcell = leftcell->below;
 			curcell = curcell->below;
-			disposecell(precell);
+			dispose_cell(precell);
 		}
 
 		leftcol->right = NULL;
@@ -282,7 +278,7 @@ void disposecol(matrix *mat, colm *curcol) {
 			currow->cellstart = rightcell;
 			rightcell->left = NULL;
 			currow = currow->below;
-			disposecell(curcell);
+			dispose_cell(curcell);
 		}
 
 		mat->colstart = curcol->right;
@@ -294,7 +290,7 @@ void disposecol(matrix *mat, colm *curcol) {
 			prerow = currow;
 			curcell = currow->cellstart;
 			currow = currow->below;
-			disposecell(curcell);
+			dispose_cell(curcell);
 			free(prerow);
 		}
 
@@ -307,11 +303,11 @@ void disposecol(matrix *mat, colm *curcol) {
 
 }
 
-void disposerow(matrix *mat, row *currow) {
+void dispose_row(struct Matrix *mat, struct Row *currow) {
 
-	row *rowbelow, *rowabove;
-	cell *curcell, *precell, *cellabove, *cellbelow;
-	colm *curcol, *precol;
+	struct Row *rowbelow, *rowabove;
+	struct Cell *curcell, *precell, *cellabove, *cellbelow;
+	struct Colm *curcol, *precol;
 
 	rowabove = currow->above;
 	rowbelow = currow->below;
@@ -330,7 +326,7 @@ void disposerow(matrix *mat, row *currow) {
 			cellbelow = cellbelow->right;
 			curcell = curcell->right;
 
-			disposecell(precell);
+			dispose_cell(precell);
 		}
 		rowabove->below = rowbelow;
 		rowbelow->above = rowabove;
@@ -346,7 +342,7 @@ void disposerow(matrix *mat, row *currow) {
 			cellabove->below = NULL;
 			cellabove = cellabove->right;
 			curcell = curcell->right;
-			disposecell(precell);
+			dispose_cell(precell);
 		}
 
 		rowabove->below = NULL;
@@ -360,7 +356,7 @@ void disposerow(matrix *mat, row *currow) {
 			curcol->cellstart = cellbelow;
 			cellbelow->above = NULL;
 			curcol = curcol->right;
-			disposecell(curcell);
+			dispose_cell(curcell);
 		}
 
 		mat->rowstart = currow->below;
@@ -372,7 +368,7 @@ void disposerow(matrix *mat, row *currow) {
 			precol = curcol;
 			curcell = curcol->cellstart;
 			curcol = curcol->right;
-			disposecell(curcell);
+			dispose_cell(curcell);
 			free(precol);
 		}
 
@@ -383,17 +379,17 @@ void disposerow(matrix *mat, row *currow) {
 
 }
 
-row *addrow(matrix *mat, row *rowabove, row *rowbelow) {
+struct Row *add_row(struct Matrix *mat, struct Row *rowabove, struct Row *rowbelow) {
 	/* */
-	cell *firstcell = NULL, *cellabove, *cellbelow;
-	cell *precell = NULL, *curcell;
-	colm *curcolhead, *firstcolhead, *precolhead = NULL;
+	struct Cell *firstcell = NULL, *cellabove, *cellbelow;
+	struct Cell *precell = NULL, *curcell;
+	struct Colm *curcolhead, *firstcolhead, *precolhead = NULL;
 	unsigned int i;
 
 	// if (!mat)
 	// 	return NULL;
 
-	row *newrow = getrowhead();
+	struct Row *newrow = get_rowhead();
 	newrow->height = DEFAULT_ROW_HEIGHT;
 	newrow->highcell = NULL;
 
@@ -407,7 +403,7 @@ row *addrow(matrix *mat, row *rowabove, row *rowbelow) {
 		 * */
 
 		for (;cellabove;) {
-			curcell = getcell();
+			curcell = get_cell();
 			curcell->left = precell;
 			if (!firstcell) {
 				firstcell = curcell;
@@ -438,7 +434,7 @@ row *addrow(matrix *mat, row *rowabove, row *rowbelow) {
 		cellabove = rowabove->cellstart;
 
 		for (;cellabove;cellabove = cellabove->right) {
-			curcell = getcell();
+			curcell = get_cell();
 			curcell->left = precell;
 			if (!firstcell) {
 				firstcell = curcell;
@@ -465,7 +461,7 @@ row *addrow(matrix *mat, row *rowabove, row *rowbelow) {
 		curcolhead = mat->colstart;
 
 		for (;cellbelow;cellbelow = cellbelow->right) {
-			curcell = getcell();
+			curcell = get_cell();
 			curcell->left = precell;
 			if (curcolhead) {
 				curcolhead->cellstart = curcell;
@@ -495,8 +491,8 @@ row *addrow(matrix *mat, row *rowabove, row *rowbelow) {
 
 		for (i=mat->ncols;i;i--) {
 
-			curcolhead = getcolhead();
-			curcell = getcell();
+			curcolhead = get_colhead();
+			curcell = get_cell();
 
 			curcolhead->cellstart = curcell;
 			if (!firstcolhead) {
@@ -541,11 +537,11 @@ row *addrow(matrix *mat, row *rowabove, row *rowbelow) {
 	return newrow;
 }
 
-matrix *makematrix(unsigned int nrows, unsigned int ncols) {
+struct Matrix *make_matrix(unsigned int nrows, unsigned int ncols) {
 
-	matrix *mat = malloc(sizeof(matrix));
-	matrix *last;
-	row *prerowhead;
+	struct Matrix *mat = malloc(sizeof(struct Matrix));
+	struct Matrix *last;
+	struct Row *prerowhead;
 	int i;
 
 	if (mat) {
@@ -553,9 +549,9 @@ matrix *makematrix(unsigned int nrows, unsigned int ncols) {
 		mat->ncols = ncols;
 		mat->nrows = 0;
 		mat->right = mat->left = NULL;
-		prerowhead = addrow(mat, NULL, NULL);
+		prerowhead = add_row(mat, NULL, NULL);
 		for(i=1;i<nrows;i++) {
-			prerowhead = addrow(mat, prerowhead, NULL);
+			prerowhead = add_row(mat, prerowhead, NULL);
 		}
 
 		mat->curcol = mat->colstart;

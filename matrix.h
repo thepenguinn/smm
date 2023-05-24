@@ -1,27 +1,39 @@
 #include<stdint.h>
 
-typedef struct matrix matrix;
-typedef struct cell cell;
-typedef struct row row;
-typedef struct colm colm;
+#define DEFAULT_VALUE 0x100
+#define DEFAULT_ROW_HEIGHT 1
+#define DEFAULT_COL_WIDTH 3
 
-struct colm {
+struct Cell;
+struct Colm;
+struct Row;
+struct Matrix;
+
+struct Cell {
+	long value;
+	struct Cell *left;
+	struct Cell *right;
+	struct Cell *above;
+	struct Cell *below;
+};
+
+struct Colm {
 	int width;
-	cell *widecell;
-	cell *cellstart;
-	colm *right;
-	colm *left;
+	struct Cell *widecell;
+	struct Cell *cellstart;
+	struct Colm *right;
+	struct Colm *left;
 };
 
-struct row {
+struct Row {
 	int height;
-	cell *highcell;
-	cell *cellstart;
-	row *above;
-	row *below;
+	struct Cell *highcell;
+	struct Cell *cellstart;
+	struct Row *above;
+	struct Row *below;
 };
 
-struct matrix {
+struct Matrix {
 	uint16_t nrows;
 	uint16_t ncols;
 	uint16_t width;
@@ -30,26 +42,18 @@ struct matrix {
 	uint16_t curcellycord;
 	float curcellxratio;
 	float curcellyratio;
-	cell *curcell;
-	row *rowstart;
-	row *currow;
-	colm *colstart;
-	colm *curcol;
-	matrix *left;
-	matrix *right;
+	struct Cell *curcell;
+	struct Row *rowstart;
+	struct Row *currow;
+	struct Colm *colstart;
+	struct Colm *curcol;
+	struct Matrix *left;
+	struct Matrix *right;
 };
 
-struct cell {
-	long value;
-	cell *left;
-	cell *right;
-	cell *above;
-	cell *below;
-};
-
-void disposerow(matrix *mat, row *currow);
-void disposecol(matrix *mat, colm *curcol);
-matrix *makematrix(unsigned int nrows, unsigned int ncols);
-row *addrow(matrix *mat, row *rowabove, row *rowbelow);
-colm *addcol(matrix *mat, colm *leftcol, colm *rightcol);
+void dispose_row(struct Matrix *mat, struct Row *currow);
+void dispose_col(struct Matrix *mat, struct Colm *curcol);
+struct Matrix *make_matrix(unsigned int nrows, unsigned int ncols);
+struct Row *add_row(struct Matrix *mat, struct Row *rowabove, struct Row *rowbelow);
+struct Colm *add_col(struct Matrix *mat, struct Colm *leftcol, struct Colm *rightcol);
 

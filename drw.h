@@ -118,10 +118,10 @@ enum SelectedSeperators {
 };
 
 void init_colorschemes();
-void change_cell_attr(WINDOW *win, matrix *mat, attr_t attr);
-void drwmatrix(WINDOW *win, matrix *mat);
-void drwcell(WINDOW *win, matrix *mat);
-void drwrow(WINDOW *win, matrix *mat, colm *coltostart, cell *celltobegin, int seperator);
-void drwcol(WINDOW *win, matrix *mat);
+void change_cell_attr(WINDOW *win, struct Matrix *mat, attr_t attr);
+void drw_matrix(WINDOW *win, struct Matrix *mat);
+void drw_cell(WINDOW *win, struct Matrix *mat);
+void drw_row(WINDOW *win,
+		struct Colm *colstart, struct Colm *colend, struct Cell *cellstart);
 void drw_topwin(WINDOW *win);
 

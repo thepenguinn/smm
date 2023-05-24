@@ -42,16 +42,15 @@ void resize_windows() {
 
 int main () {
 
-	matrix *mat;
+	struct Matrix *mat;
 	int x, y;
 	int change = 0;
 	/*debugging*/
 	int shit;
-	colm *curcol;
+	struct Colm *curcol;
 	int ch;
 
 	init_logger();
-	smm_log(DEBUG, "testing smm_log");
 	
 	initscr();
 	clear();
@@ -61,7 +60,6 @@ int main () {
 		init_colorschemes();
 
 	curs_set(0);
-
 
 	getmaxyx(stdscr, y, x);
 
@@ -81,11 +79,7 @@ int main () {
 			y - botwin_nlines - edge_pad_horizontal,
 			edge_pad_vertical);
 
-	mat = makematrix(6, 6);
-	//  init_color(17, 1000, 112, 1000);
-	//  init_color(18, 120, 112, 190);
-	//  init_pair(20, 18, 17);
-	// init_color(20, 238, 238, 234);
+	mat = make_matrix(3, 3);
 
 	if (shit > 500)
 		shit = 0;
@@ -101,24 +95,24 @@ int main () {
 	wrefresh(topwin);
 	wrefresh(botwin);
 
-	row *currow;
+	struct Row *currow;
 	for(curcol = mat->colstart;curcol->right;curcol = curcol->right);
 	for(currow = mat->rowstart;currow->below;currow = currow->below);
 
-	drwmatrix(mainwin, mat);
+	drw_matrix(mainwin, mat);
 	wrefresh(mainwin);
 	while ((ch = wgetch(mainwin)) != 'q') {
 
 		switch (ch) {
 			case 'h':
 				if (curcol->right)
-					disposecol(mat, curcol->right);
+					dispose_col(mat, curcol->right);
 				// change_cell_attr(mainwin, mat, A_NORMAL);
 				// fputs("\033[6 q", stdout);
 				// fflush(stdout);
 				break;
 			case 'l':
-				addcol(mat, curcol, curcol->right);
+				add_col(mat, curcol, curcol->right);
 				// change_cell_attr(mainwin, mat, A_BOLD);
 				// fputs("\033[2 q", stdout);
 				// fflush(stdout);
@@ -127,10 +121,10 @@ int main () {
 				break;
 			case 'j':
 				if (currow->below)
-					disposerow(mat, currow->below);
+					dispose_row(mat, currow->below);
 				break;
 			case 'k':
-				addrow(mat, currow, currow->below);
+				add_row(mat, currow, currow->below);
 				break;
 			case KEY_RESIZE:
 				resize_windows();
@@ -150,7 +144,7 @@ int main () {
 		mvwprintw(botwin, 2, 0, "hai this is botwin %d", shit);
 
 		// wattron(mainwin, COLOR_PAIR(3));
-		drwmatrix(mainwin, mat);
+		drw_matrix(mainwin, mat);
 		// attron(COLOR_PAIR(20));
 		// printw("x --> %d, and y --> %d\n", x, y);
 
