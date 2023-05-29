@@ -129,15 +129,22 @@ static int color_schemes[SCHEME_END][ELEMENT_END] = {
 		[ELEMENT_HELP_OTHER_KEYS]         = ColorPair(PAIR_BRT_GREY_DEFAULT_BG),
 		[ELEMENT_HELP_OTHER_ACTIONS]      = ColorPair(PAIR_DIM_GREY_DEFAULT_BG),
 	},
-	/* we will set this later */
+	/* ill set this later */
 	//[SCHEME_MONOCHROME] = NULL,
 };
 
-void drw_cell(WINDOW *win, struct Matrix *mat) {
-
-
-
-}
+static void set_symbols(struct Row *rowstart, struct Row *rowend,
+		struct Colm *colstart, struct Colm *colend, const char *symbols[]);
+static void drw_row_seperator(WINDOW *win,
+		struct Colm *colstart, struct Colm *colend, const char *widesymbol);
+static void drw_row(WINDOW *win,
+		struct Colm *colstart, struct Colm *colend, struct Cell *cellstart);
+static void set_colstart(struct Blueprint *bprint);
+static void set_colend(struct Blueprint *bprint);
+static void set_rowstart(struct Blueprint *bprint);
+static void set_rowend(struct Blueprint *bprint);
+static void align_matrix(struct Blueprint *bprint);
+static void drw_matrix(WINDOW *win, struct Blueprint *bprint);
 
 void init_colorschemes() {
 
@@ -173,7 +180,7 @@ void init_colorschemes() {
 
 }
 
-void drw_row_seperator(WINDOW *win,
+static void drw_row_seperator(WINDOW *win,
 		struct Colm *colstart, struct Colm *colend, const char *widesymbol) {
 
 	int i;
@@ -194,8 +201,15 @@ void drw_row_seperator(WINDOW *win,
 static void set_symbols(struct Row *rowstart, struct Row *rowend,
 		struct Colm *colstart, struct Colm *colend, const char *symbols[]) {
 
+	/*
+	struct Row *rowstart;
+	struct Row *rowend;
+	struct Colm *colstart;
+	struct Colm *colend;
+	*/
+
 	/* 
-	 * I know this is probably inefficient but I think this is more readable I guess.... :)
+	 * I know this is probably inefficient but I think its more readable... I guess... :)
 	 * */
 	
 	if (rowstart->above && colstart->left) {
@@ -248,7 +262,7 @@ static void set_symbols(struct Row *rowstart, struct Row *rowend,
 
 }
 
-void drw_row(WINDOW *win,
+static void drw_row(WINDOW *win,
 		struct Colm *colstart, struct Colm *colend, struct Cell *cellstart) {
 
 
@@ -275,117 +289,322 @@ void drw_row(WINDOW *win,
 
 }
 
-// void drw_matrix(WINDOW *win, struct Matrix *mat, struct Colm *coltostart, struct Colm *coltostop) {
-void drw_matrix(WINDOW *win, struct Matrix *mat) {
 
-	unsigned int xmax, ymax;
-	unsigned int begx, begy;
-	unsigned int endx, endy;
-	unsigned int curx, cury;
-	unsigned int xstart, ystart;
-	unsigned int mwidth, mheight;
-	struct Cell *curcell;
-	struct Cell *cellstart;
-	struct Colm *colstart, *colend;
-	struct Row *rowstart, *rowend;
+static void set_colstart(struct Blueprint *bprint) {
+
+	if (!(bprint->colstart)) {
+		smm_log(WARN, "set_colstart: bprint->colstart is NULL");
+		return;
+	}
+
+	while (bprint->colstart->left
+			&& bprint->begx - bprint->colstart->left->width - 3 >= 0) {
+
+			bprint->colstart = bprint->colstart->left;
+			bprint->begx -= bprint->colstart->width + 3;
+			bprint->cellstart = bprint->cellstart->left;
+
+	}
+
+}
+
+static void set_colend(struct Blueprint *bprint) {
+
+	if (!(bprint->colend)) {
+		smm_log(WARN, "set_colend: bprint->colend is NULL");
+		return;
+	}
+
+	while (bprint->colend->right
+			&& bprint->endx + bprint->colend->right->width
+			+ 3 <= bprint->xmax) {
+
+			bprint->colend = bprint->colend->right;
+			bprint->endx += bprint->colend->width + 3;
+
+	}
+
+}
+
+static void set_rowstart(struct Blueprint *bprint) {
+
+	if (!bprint->rowstart) {
+		smm_log(WARN, "set_rowstart: bprint->rowstart is NULL");
+		return;
+	}
+
+	while (bprint->rowstart->above && bprint->begy
+			- bprint->rowstart->above->height - 1 >= 0) {
+
+			bprint->rowstart = bprint->rowstart->above;
+			bprint->begy -= bprint->rowstart->height + 1;
+			bprint->cellstart = bprint->cellstart->above;
+
+	}
+
+}
+
+static void set_rowend(struct Blueprint *bprint) {
+
+	if (!bprint->rowend) {
+		smm_log(WARN, "set_rowend: bprint->rowend is NULL");
+		return;
+	}
+
+	while (bprint->rowend->below && bprint->endy
+			+ bprint->rowend->below->height + 1 <= bprint->ymax) {
+
+			bprint->rowend = bprint->rowend->below;
+			bprint->endy += bprint->rowend->height + 1;
+
+	}
+
+}
+
+void drw_left_matrix(WINDOW *win, struct Matrix *mat,
+		struct Colm *colend, struct Cell *cellstart, int begx) {
+
+	struct Blueprint bprint;
+
+	bprint.begx = begx;
+	bprint.begy = mat->curcellycord;
+	/* end x cord of the colstart column */
+	bprint.endx = begx + colend->width + 3;
+	/* end y cord of the current row */
+	bprint.endy = bprint.begy + mat->currow->height + 1;
+
+	bprint.colstart = bprint.colend = colend;
+	bprint.rowstart = bprint.rowend = mat->currow;
+	bprint.cellstart = cellstart;
+
+	bprint.xmax = mat->xmax;
+	bprint.ymax = mat->ymax;
+
+	set_colstart(&bprint);
+	set_rowstart(&bprint);
+	set_rowend(&bprint);
+
+	drw_matrix(win, &bprint);
+
+}
+
+void drw_right_matrix(WINDOW *win, struct Matrix *mat,
+		struct Colm *colstart, struct Cell *cellstart, int begx) {
+
+	struct Blueprint bprint;
+
+	bprint.begx = begx;
+	/* end x cord of the colstart column */
+	bprint.endx = begx + colstart->width + 3;
+	bprint.begy = mat->curcellycord;
+	/* end y cord of the current row */
+	bprint.endy = bprint.begy + mat->currow->height + 1;
+
+	bprint.colend = bprint.colstart = colstart;
+	bprint.rowstart = bprint.rowend = mat->currow;
+	bprint.cellstart = cellstart;
+
+	bprint.xmax = mat->xmax;
+	bprint.ymax = mat->ymax;
+
+	set_rowstart(&bprint);
+	set_colend(&bprint);
+	set_rowend(&bprint);
+
+	drw_matrix(win, &bprint);
+
+}
+
+void drw_above_matrix(WINDOW *win, struct Matrix *mat,
+		struct Row *rowend, struct Cell *cellstart, int begy) {
+
+	struct Blueprint bprint;
+
+	bprint.begy = begy;
+	bprint.endy = begy + rowend->height + 1;
+	bprint.begx = mat->curcellxcord;
+	bprint.endx = bprint.begx + mat->curcol->width + 3;
+
+	bprint.rowstart = bprint.rowend = rowend;
+	bprint.colstart = bprint.colend = mat->curcol;
+	bprint.cellstart = cellstart;
+
+	bprint.xmax = mat->xmax;
+	bprint.ymax = mat->ymax;
+
+	set_rowstart(&bprint);
+	set_colstart(&bprint);
+	set_colend(&bprint);
+
+	drw_matrix(win, &bprint);
+
+}
+
+void drw_below_matrix(WINDOW *win, struct Matrix *mat,
+		struct Row *rowstart, struct Cell *cellstart, int begy) {
+
+	struct Blueprint bprint;
+
+	bprint.begy = begy;
+	bprint.endy = begy + rowstart->height + 1;
+	bprint.begx = mat->curcellxcord;
+	bprint.endx = bprint.begx + mat->curcol->width + 3;
+
+	bprint.rowstart = bprint.rowend = rowstart;
+	bprint.colstart = bprint.colend = mat->curcol;
+	bprint.cellstart = cellstart;
+
+	bprint.xmax = mat->xmax;
+	bprint.ymax = mat->ymax;
+
+	set_colstart(&bprint);
+	set_rowstart(&bprint);
+	set_colend(&bprint);
+
+	drw_matrix(win, &bprint);
+
+}
+
+static void align_matrix(struct Blueprint *bprint) {
+
+	int mwidth, mheight;
+
+	if (!bprint->colstart->left && !bprint->colend->right) {
+
+		mwidth = bprint->endx - bprint->begx + 1;
+		bprint->ccx = bprint->ccx
+			- (bprint->begx - ((bprint->xmax - mwidth) / 2));
+		bprint->begx = (bprint->xmax - mwidth) / 2;
+
+	} else if (!bprint->colstart->left) {
+
+		bprint->ccx = bprint->ccx - bprint->begx;
+		bprint->endx = bprint->endx - bprint->begx;
+		bprint->begx = 0;
+		set_colend(bprint);
+
+	} else if (bprint->colend->right) {
+
+		bprint->ccx = bprint->ccx + (bprint->xmax - bprint->endx);
+		bprint->begx = bprint->begx + (bprint->xmax - bprint->endx);
+		bprint->endx = bprint->xmax;
+		set_colstart(bprint);
+
+	}
+
+	if (!bprint->rowstart->above && !bprint->rowend->below) {
+
+		mheight = bprint->endy - bprint->begy + 1;
+		bprint->ccy = bprint->ccy
+			- (bprint->begy - ((bprint->ymax - mheight) / 2));
+		bprint->begy = (bprint->ymax - mheight) / 2;
+
+	} else if (!bprint->rowstart->above) {
+
+		bprint->ccy = bprint->ccy - bprint->begy;
+		bprint->endy = bprint->endy - bprint->begy;
+		bprint->begy = 0;
+		set_rowend(bprint);
+
+	} else if (!bprint->rowend->below) {
+
+		bprint->ccy = bprint->ccy + (bprint->ymax - bprint->endy);
+		bprint->begy = bprint->begy + (bprint->ymax - bprint->endy);
+		bprint->endy = bprint->ymax;
+		set_rowstart(bprint);
+
+	}
+
+}
+
+void drw_whole_matrix(WINDOW *win, struct Matrix *mat) {
+
+	struct Blueprint bprint;
+
+	getmaxyx(win, bprint.ymax, bprint.xmax);
+
+	/* its the number of cols and rows but cords starts with 0 */
+
+	bprint.ymax--;
+	bprint.xmax--;
+
+	/*
+	 * if the current xmax or ymax is not equal to the previous xmax
+	 * and ymax, we need to find the new curcell coordinates
+	 * */
+
+	if (mat->xmax != bprint.xmax) {
+		if (mat->xmax)
+			bprint.begx = (float)mat->curcellxcord / mat->xmax * bprint.xmax;
+		else
+			bprint.begx = 0;
+		mat->xmax = bprint.xmax;
+	} else
+		bprint.begx = mat->curcellxcord;
+
+	if (mat->ymax != bprint.ymax) {
+		if (mat->ymax)
+			bprint.begy = (float)mat->curcellycord / mat->ymax * bprint.ymax;
+		else
+			bprint.begy = 0;
+		mat->ymax = bprint.ymax;
+	} else
+		bprint.begy = mat->curcellycord;
+
+	bprint.colstart = bprint.colend = mat->curcol;
+	bprint.rowstart = bprint.rowend = mat->currow;
+	bprint.cellstart = mat->curcell;
+
+	if (bprint.begx < 0)
+		bprint.begx = 0;
+
+	if (bprint.begy < 0)
+		bprint.begy = 0;
+
+	if (bprint.begx + bprint.colstart->width + 3 > bprint.xmax)
+		bprint.begx = bprint.xmax - bprint.colstart->width - 3;
+
+	if (bprint.begy + bprint.rowstart->height + 1 > bprint.xmax)
+		bprint.begy = bprint.ymax - bprint.rowstart->height - 1;
+
+	bprint.ccx = bprint.begx;
+	bprint.ccy = bprint.begy;
+	
+	bprint.endx = bprint.begx + bprint.colstart->width + 3;
+	bprint.endy = bprint.begy + bprint.rowstart->height + 1;
+
+	set_colstart(&bprint);
+	set_rowstart(&bprint);
+	set_colend(&bprint);
+	set_rowend(&bprint);
+
+	align_matrix(&bprint);
+	drw_matrix(win, &bprint);
+
+	mat->curcellxcord = bprint.ccx;
+	mat->curcellycord = bprint.ccy;
+
+}
+
+static void drw_matrix(WINDOW *win, struct Blueprint *bprint) {
+
+	struct Row *rowstart = bprint->rowstart;
+	struct Row *rowend = bprint->rowend;
+	struct Colm *colstart = bprint->colstart;
+	struct Colm *colend = bprint->colend;
+	struct Cell *cellstart = bprint->cellstart;
+
+	int begx = bprint->begx;
+	int begy = bprint->begy;
 
 	const char *symbols[8];
 
-	if (!mat)
-		return;
-
-	getmaxyx(win, ymax, xmax);
-
-	wattron(win, color_schemes[SCHEME_DEFAULT][ELEMENT_MATRIX_SEPERATOR]);
-
-	/* its the number of cols and rows but cords starts with 0 */
-	xmax--;
-	ymax--;
-
-	endx = begx = mat->curcellxratio * xmax;
-	endy = begy = mat->curcellyratio * ymax;
-
-	/*
-	 * Ensuring that we will always have the space to draw the curcell
-	 * */
-
-	if (begx + mat->curcol->width + 3 > xmax)
-		endx = begx = xmax - mat->curcol->width - 3;
-
-	if (begy + mat->currow->height + 1 > ymax)
-		endy = begy = ymax - mat->currow->height - 1;
-
-	mheight = mwidth = 0;
-
-	cellstart = mat->curcell;
-
-	//if (coltostart && coltostart == curcol)
-
-	for (colstart = mat->curcol->left;colstart;colstart = colstart->left) {
-		if (begx - colstart->width - 3 >= 0) {
-			begx -= colstart->width + 3;
-			mwidth += colstart->width + 3;
-			cellstart = cellstart->left;
-		} else {
-			colstart = colstart->right;
-			break;
-		}
-	}
-
-	if (!colstart)
-		colstart = mat->curcol;
-
-	for (rowstart = mat->currow->above;rowstart;rowstart = rowstart->above) {
-		if (begy - rowstart->height - 1 >= 0) {
-			begy -= rowstart->height + 1;
-			mheight += rowstart->height + 1;
-			cellstart = cellstart->above;
-		} else {
-			rowstart = rowstart->below;
-			break;
-		}
-	}
-
-	if (!rowstart)
-		rowstart = mat->currow;
-
-	for (colend = mat->curcol;colend;colend = colend->right) {
-		if (endx + colend->width + 3 <= xmax) {
-			endx  += colend->width + 3;
-			mwidth += colend->width + 3;
-		} else {
-			colend = colend->left;
-			break;
-		}
-		if (!(colend->right))
-			break;
-	}
-
-	for (rowend = mat->currow;rowend;rowend = rowend->below) {
-		if (endy + rowend->height + 1 <= ymax) {
-			endy += rowend->height + 1;
-			mheight += rowend->height + 1;
-		} else {
-			rowend = rowend->above;
-			break;
-		}
-		if (!(rowend->below))
-			break;
-	}
-	
-	begx = (xmax - mwidth) / 2;
-	begy = (ymax - mheight) / 2;
-
-	mat->curcellxcord = begx;
-	mat->curcellycord = begy;
-
-	// mat->curcellxratio = (double)(begx / (xmax + 1));
-	// mat->curcellyratio = (double)(begy / (ymax + 1));
+	set_symbols(rowstart, rowend, colstart, colend, symbols);
 
 	werase(win);
 	wmove(win, begy, begx);
 
-	set_symbols(rowstart, rowend, colstart, colend, symbols);
+	wattron(win, color_schemes[SCHEME_DEFAULT][ELEMENT_MATRIX_SEPERATOR]);
 
 	wprintw(win, "%s", symbols[TOPLEFT_CORNER]);
 	drw_row_seperator(win, colstart, colend, symbols[TOP_EDGE]);
@@ -422,20 +641,8 @@ void drw_matrix(WINDOW *win, struct Matrix *mat) {
 	drw_row_seperator(win, colstart, colend, symbols[BOT_EDGE]);
 	wprintw(win, "%s", symbols[BOTRIGHT_CORNER]);
 
-	/* 
-	 *  20 | 345 
-	 * ----+-----
-	 *  20 | 345 
-	 * width of a column is the number of charaters needed to represent that number
-	 * in ascii. mat->width is the sum of all of the columns.
-	 *
-	 * In this case 20 has 2 and 345 has 3. Therefore mat->width is 5.
-	 * 
-	 * There is a one space padding for each cell to the left and right. And there
-	 * is a pipe symbol seperating each cell.
-	 * */
-
 }
+
 
 void drw_topwin(WINDOW *win) {
 
@@ -450,12 +657,9 @@ void drw_topwin(WINDOW *win) {
 
 }
 
-void change_cell_attr(WINDOW *win, struct Matrix *mat, attr_t attr) {
+void change_cell_attr(WINDOW *win, struct Matrix *mat, int attr_idx) {
 	
-	unsigned int xmax, ymax;
 	unsigned int ccx, ccy;
-
-	getmaxyx(win, ymax, xmax);
 
 	ccx = mat->curcellxcord;
 	ccy = mat->curcellycord;
@@ -465,6 +669,6 @@ void change_cell_attr(WINDOW *win, struct Matrix *mat, attr_t attr) {
 	
 	wmove(win, ccy, ccx);
 
-	wchgat(win, mat->curcol->width, attr | COLOR_PAIR(5), 0, NULL);
+	wchgat(win, mat->curcol->width, color_schemes[SCHEME_DEFAULT][attr_idx], 0, NULL);
 
 }

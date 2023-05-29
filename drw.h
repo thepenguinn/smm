@@ -117,11 +117,36 @@ enum SelectedSeperators {
 	LEFT_EDGE,
 };
 
+struct Blueprint {
+
+	int begx;
+	int endx;
+	int begy;
+	int endy;
+	int xmax;
+	int ymax;
+	int ccx;
+	int ccy;
+
+	struct Colm *colstart;
+	struct Colm *colend;
+	struct Row *rowstart;
+	struct Row *rowend;
+	struct Cell *cellstart;
+
+};
+
+
 void init_colorschemes();
-void change_cell_attr(WINDOW *win, struct Matrix *mat, attr_t attr);
-void drw_matrix(WINDOW *win, struct Matrix *mat);
-void drw_cell(WINDOW *win, struct Matrix *mat);
-void drw_row(WINDOW *win,
-		struct Colm *colstart, struct Colm *colend, struct Cell *cellstart);
 void drw_topwin(WINDOW *win);
+void drw_left_matrix(WINDOW *win, struct Matrix *mat,
+		struct Colm *colend, struct Cell *cellstart, int begx);
+void drw_right_matrix(WINDOW *win, struct Matrix *mat,
+		struct Colm *colstart, struct Cell *cellstart, int begx);
+void drw_above_matrix(WINDOW *win, struct Matrix *mat,
+		struct Row *rowend, struct Cell *cellstart, int begy);
+void drw_below_matrix(WINDOW *win, struct Matrix *mat,
+		struct Row *rowstart, struct Cell *cellstart, int begy);
+void drw_whole_matrix(WINDOW *win, struct Matrix *mat);
+void change_cell_attr(WINDOW *win, struct Matrix *mat, int attr_idx);
 

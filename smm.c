@@ -12,12 +12,189 @@
 
 static int main_window_content = MAIN_MENU;
 
+static struct Matrix *mhead = NULL;
+static struct Matrix *mtail = NULL;
 
-void normal_mode() {
+static void create_windows();
+static void normal_mode();
+static void resize_windows();
+
+/*
+ * need this one to change cursor shape *
+ * fputs("\033[6 q", stdout);
+ * fflush(stdout); 
+ * */
+
+static void attach_matrix(struct Matrix *mattoattach, struct Matrix *leftmat, struct Matrix *rightmat) {
+
+	if (!mattoattach) {
+		smm_log(WARN, "attach_matrix was called with a NULL mattoattach");
+		return;
+	}
+
+	if (leftmat)
+		leftmat->right = mattoattach;
+	else {
+		mhead = mattoattach;
+		smm_log(DEBUG, "mhead changed to mattoattach");
+	}
+
+	if (rightmat)
+		rightmat->left = mattoattach;
+	else {
+		mtail = mattoattach;
+		smm_log(DEBUG, "mtail changed to mattoattach");
+	}
+
+	mattoattach->left = leftmat;
+	mattoattach->right = rightmat;
 
 }
 
-void resize_windows() {
+static void normal_mode() {
+
+	int event;
+	struct Matrix *curmat = NULL;
+	struct Colm *curcol = NULL;
+	struct Row *currow = NULL;
+	struct Cell *curcell = NULL;
+
+	drw_topwin(topwin);
+
+	mhead = mtail = curmat = make_matrix(3, 10);
+	curcol = curmat->curcol;
+	currow = curmat->currow;
+	curcell = curmat->curcell;
+
+	drw_whole_matrix(mainwin, curmat);
+	wrefresh(mainwin);
+
+	while ((event = wgetch(mainwin)) != 'q') {
+
+		if (event == KEY_RESIZE)
+			resize_windows();
+
+		drw_topwin(topwin);
+
+		drw_whole_matrix(mainwin, curmat);
+
+		wrefresh(topwin);
+		wrefresh(botwin);
+		wrefresh(mainwin);
+
+	}
+
+	endwin();
+	exit(EXIT_FAILURE);
+
+
+	drw_whole_matrix(mainwin, curmat);
+
+	wrefresh(topwin);
+	wrefresh(botwin);
+	wrefresh(mainwin);
+
+	// change_cell_attr(mainwin, curmat, ELEMENT_MATRIX_NORMAL);
+	// mvccright(curmat);
+	// change_cell_attr(mainwin, curmat, ELEMENT_MATRIX_SELECTED);
+
+	// drw_whole_matrix(mainwin, curmat);
+	// change_cell_attr(mainwin, curmat, ELEMENT_MATRIX_SELECTED);
+	// mvccright(curmat);
+	// drw_whole_matrix(mainwin, curmat);
+
+	// drw_whole_matrix(mainwin, curmat);
+	// mvccright(curmat);
+	// wrefresh(mainwin);
+
+	// mvccright(curmat);
+	// drw_whole_matrix(mainwin, curmat);
+	// wrefresh(mainwin);
+
+	while ((event = wgetch(mainwin)) != 'q') {
+
+		switch (event) {
+			case 'h':
+				// change_cell_attr(mainwin, curmat, ELEMENT_MATRIX_NORMAL);
+				mvccleft(curmat);
+				// change_cell_attr(mainwin, curmat, ELEMENT_MATRIX_SELECTED);
+				break;
+			case 'l':
+				// change_cell_attr(mainwin, curmat, ELEMENT_MATRIX_NORMAL);
+				mvccright(curmat);
+				// change_cell_attr(mainwin, curmat, ELEMENT_MATRIX_SELECTED);
+				break;
+			case 'H':
+				if (curcol && curcol->right)
+					dispose_col(curmat, curcol->right);
+				break;
+			case 'L':
+				if (curmat)
+					add_col(curmat, curcol, curcol->right);
+				break;
+			case 'j':
+				if (currow && currow->below)
+					dispose_row(curmat, currow->below);
+				break;
+			case 'k':
+				if (curmat)
+					add_row(curmat, currow, currow->below);
+				break;
+			case 'n':
+				if (curmat) {
+					attach_matrix(make_matrix(3, 3), curmat, curmat->right);
+					curmat = curmat->right;
+				} else {
+					attach_matrix(make_matrix(3, 3), curmat, NULL);
+					curmat = mhead;
+				}
+
+				curcol = curmat->curcol;
+				currow = curmat->currow;
+				curcell = curmat->curcell;
+
+				break;
+			case 'P':
+				if (curmat && curmat->left) {
+					curmat = curmat->left;
+					curcol = curmat->curcol;
+					currow = curmat->currow;
+					curcell = curmat->curcell;
+
+				}
+				break;
+
+			case 'N':
+				if (curmat && curmat->right) {
+					curmat = curmat->right;
+					curcol = curmat->curcol;
+					currow = curmat->currow;
+					curcell = curmat->curcell;
+
+				}
+				break;
+
+			case KEY_RESIZE:
+				resize_windows();
+				break;
+
+		}
+
+		smm_log(DEBUG, "did pass switch");
+
+		drw_topwin(topwin);
+		drw_whole_matrix(mainwin, curmat);
+
+		smm_log(DEBUG, "its not drw_whole_matrix");
+		change_cell_attr(mainwin, curmat, ELEMENT_MATRIX_SELECTED);
+
+		wrefresh(topwin);
+		wrefresh(botwin);
+		wrefresh(mainwin);
+	}
+}
+
+static void resize_windows() {
 
 	int xmax, ymax;
 
@@ -38,17 +215,32 @@ void resize_windows() {
 
 }
 
+static void create_windows() {
+
+	int xmax, ymax;
+
+	getmaxyx(stdscr, ymax, xmax);
+
+	topwin = newwin(topwin_nlines,
+			xmax - (2 * edge_pad_vertical),
+			edge_pad_horizontal,
+			edge_pad_vertical);
+
+	mainwin = newwin(ymax - (topwin_nlines + botwin_nlines)
+			- (2 * edge_pad_horizontal) - (2 * mainwin_pad_horizontal),
+			xmax - (2 * edge_pad_vertical),
+			edge_pad_horizontal + topwin_nlines + mainwin_pad_horizontal,
+			edge_pad_vertical);
+
+	botwin = newwin(botwin_nlines,
+			xmax - (2 * edge_pad_vertical),
+			ymax - botwin_nlines - edge_pad_horizontal,
+			edge_pad_vertical);
+
+}
 
 
 int main () {
-
-	struct Matrix *mat;
-	int x, y;
-	int change = 0;
-	/*debugging*/
-	int shit;
-	struct Colm *curcol;
-	int ch;
 
 	init_logger();
 	
@@ -61,97 +253,10 @@ int main () {
 
 	curs_set(0);
 
-	getmaxyx(stdscr, y, x);
+	create_windows();
 
-	topwin = newwin(topwin_nlines,
-			x - (2 * edge_pad_vertical),
-			edge_pad_horizontal,
-			edge_pad_vertical);
+	normal_mode();
 
-	mainwin = newwin(y - (topwin_nlines + botwin_nlines)
-			- (2 * edge_pad_horizontal) - (2 * mainwin_pad_horizontal),
-			x - (2 * edge_pad_vertical),
-			edge_pad_horizontal + topwin_nlines + mainwin_pad_horizontal,
-			edge_pad_vertical);
-
-	botwin = newwin(botwin_nlines,
-			x - (2 * edge_pad_vertical),
-			y - botwin_nlines - edge_pad_horizontal,
-			edge_pad_vertical);
-
-	mat = make_matrix(3, 3);
-
-	if (shit > 500)
-		shit = 0;
-	shit++;
-	mvwprintw(botwin, 0, 0, "hai this is botwin %d", shit);
-	shit++;
-	mvwprintw(botwin, 1, 0, "hai this is botwin %d", shit);
-	shit++;
-	mvwprintw(botwin, 2, 0, "hai this is botwin %d", shit);
-
-	drw_topwin(topwin);
-
-	wrefresh(topwin);
-	wrefresh(botwin);
-
-	struct Row *currow;
-	for(curcol = mat->colstart;curcol->right;curcol = curcol->right);
-	for(currow = mat->rowstart;currow->below;currow = currow->below);
-
-	drw_matrix(mainwin, mat);
-	wrefresh(mainwin);
-	while ((ch = wgetch(mainwin)) != 'q') {
-
-		switch (ch) {
-			case 'h':
-				if (curcol->right)
-					dispose_col(mat, curcol->right);
-				// change_cell_attr(mainwin, mat, A_NORMAL);
-				// fputs("\033[6 q", stdout);
-				// fflush(stdout);
-				break;
-			case 'l':
-				add_col(mat, curcol, curcol->right);
-				// change_cell_attr(mainwin, mat, A_BOLD);
-				// fputs("\033[2 q", stdout);
-				// fflush(stdout);
-				// wprintw(mainwin, "\033[2 q");
-				// printf("\033[2 q");
-				break;
-			case 'j':
-				if (currow->below)
-					dispose_row(mat, currow->below);
-				break;
-			case 'k':
-				add_row(mat, currow, currow->below);
-				break;
-			case KEY_RESIZE:
-				resize_windows();
-				break;
-
-		}
-
-		drw_topwin(topwin);
-
-		if (shit > 500)
-			shit = 0;
-		shit++;
-		mvwprintw(botwin, 0, 0, "hai this is botwin %d", shit);
-		shit++;
-		mvwprintw(botwin, 1, 0, "hai this is botwin %d", shit);
-		shit++;
-		mvwprintw(botwin, 2, 0, "hai this is botwin %d", shit);
-
-		// wattron(mainwin, COLOR_PAIR(3));
-		drw_matrix(mainwin, mat);
-		// attron(COLOR_PAIR(20));
-		// printw("x --> %d, and y --> %d\n", x, y);
-
-		wrefresh(topwin);
-		wrefresh(botwin);
-		wrefresh(mainwin);
-	}
 	endwin();
 	printf("\033[2 q");
 }

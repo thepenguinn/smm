@@ -21,6 +21,8 @@ void init_logger() {
 	} else {
 		fprintf(logfile, "INFO:  initialized logging process.\nINFO:  Aloha!\n");
 		nevercallmeagain = 1;
+		fflush(logfile);
+
 	}
 
 }
@@ -44,6 +46,7 @@ void smm_log(int log_level, const char * fmt, ...) {
 
 	fprintf(logfile, "\n");
 
+	fflush(logfile);
 }
 
 

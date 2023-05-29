@@ -11,6 +11,54 @@ static struct Row *get_rowhead();
 
 // guess ill go to mars;
 
+
+void mvccright(struct Matrix *mat) {
+
+	int newx;
+
+	if (mat->curcol->right) {
+
+		/* starting xcord of the right column */
+		newx = mat->curcellxcord + mat->curcol->width + 3;
+
+		mat->curcol = mat->curcol->right;
+		mat->curcell = mat->curcell->right;
+
+		/* checking whether the right column fits the screen */
+		if (newx + mat->curcol->width + 3 >= mat->xmax)
+			/* that - 1 is because the xmax is the number of columns */
+			newx = mat->xmax - mat->curcol->width - 3;
+
+		mat->curcellxcord = newx;
+
+	}
+
+
+}
+
+void mvccleft(struct Matrix *mat) {
+
+	int newx;
+
+	if (mat->curcol->left) {
+
+		/* starting xcord of the left column */
+		newx = mat->curcellxcord;
+
+		mat->curcol = mat->curcol->left;
+		mat->curcell = mat->curcell->left;
+
+		/* checking whether the left column fits the screen */
+		newx = newx - mat->curcol->width - 3;
+		if (newx < 0)
+			newx = 0;
+
+		mat->curcellxcord = newx;
+
+	}
+
+}
+
 static struct Cell *get_cell() {
 
 	struct Cell *ccell;
@@ -67,7 +115,7 @@ struct Colm *add_col(struct Matrix *mat, struct Colm *leftcol, struct Colm *righ
 
 	struct Cell *firstcell = NULL, *leftcell, *rightcell;
 	struct Cell *precell = NULL, *curcell;
-	struct Row *currowhead, *firstrowhead, *prerowhead = NULL;
+	struct Row *currowhead, *firstrowhead = NULL, *prerowhead = NULL;
 	unsigned int i;
 
 	if (!mat)
@@ -225,21 +273,26 @@ struct Colm *add_col(struct Matrix *mat, struct Colm *leftcol, struct Colm *righ
 
 }
 
-void dispose_col(struct Matrix *mat, struct Colm *curcol) {
+void dispose_col(struct Matrix *mat, struct Colm *coltod) {
 
 	struct Colm *leftcol, *rightcol;
 	struct Cell *curcell, *precell, *leftcell, *rightcell;
 	struct Row *currow, *prerow;
 
-	leftcol = curcol->left;
-	rightcol = curcol->right;
+	if (!coltod) {
+		smm_log(WARN, "dispose_col was called with a NULL coltod");
+		return;
+	}
+
+	leftcol = coltod->left;
+	rightcol = coltod->right;
 
 	if (leftcol && rightcol) {
 
 		leftcell = leftcol->cellstart;
 		rightcell = rightcol->cellstart;
 
-		for (curcell = curcol->cellstart;curcell;) {
+		for (curcell = coltod->cellstart;curcell;) {
 			leftcell->right = rightcell;
 			rightcell->left = leftcell;
 
@@ -253,13 +306,13 @@ void dispose_col(struct Matrix *mat, struct Colm *curcol) {
 		leftcol->right = rightcol;
 		rightcol->left = leftcol;
 
-		free(curcol);
+		free(coltod);
 
 	} else if (leftcol) {
 
 		leftcell = leftcol->cellstart;
 
-		for (curcell=curcol->cellstart;curcell;) {
+		for (curcell=coltod->cellstart;curcell;) {
 			precell = curcell;
 			leftcell->right = NULL;
 			leftcell = leftcell->below;
@@ -268,7 +321,7 @@ void dispose_col(struct Matrix *mat, struct Colm *curcol) {
 		}
 
 		leftcol->right = NULL;
-		free(curcol);
+		free(coltod);
 
 	} else if (rightcol) {
 
@@ -281,8 +334,8 @@ void dispose_col(struct Matrix *mat, struct Colm *curcol) {
 			dispose_cell(curcell);
 		}
 
-		mat->colstart = curcol->right;
-		free(curcol);
+		mat->colstart = coltod->right;
+		free(coltod);
 
 	} else {
 
@@ -294,7 +347,7 @@ void dispose_col(struct Matrix *mat, struct Colm *curcol) {
 			free(prerow);
 		}
 
-		free(curcol);
+		free(coltod);
 		mat->rowstart = mat->colstart = NULL;
 
 	}
@@ -303,21 +356,26 @@ void dispose_col(struct Matrix *mat, struct Colm *curcol) {
 
 }
 
-void dispose_row(struct Matrix *mat, struct Row *currow) {
+void dispose_row(struct Matrix *mat, struct Row *rowtod) {
 
 	struct Row *rowbelow, *rowabove;
 	struct Cell *curcell, *precell, *cellabove, *cellbelow;
 	struct Colm *curcol, *precol;
 
-	rowabove = currow->above;
-	rowbelow = currow->below;
+	if (!rowtod) {
+		smm_log(WARN, "dispose_row was called with a NULL rowtod");
+		return;
+	}
+
+	rowabove = rowtod->above;
+	rowbelow = rowtod->below;
 
 	if (rowabove && rowbelow) {
 
 		cellabove = rowabove->cellstart;
 		cellbelow = rowbelow->cellstart;
 
-		for (curcell = currow->cellstart;curcell;) {
+		for (curcell = rowtod->cellstart;curcell;) {
 			cellabove->below = cellbelow;
 			cellbelow->above = cellabove;
 
@@ -331,13 +389,13 @@ void dispose_row(struct Matrix *mat, struct Row *currow) {
 		rowabove->below = rowbelow;
 		rowbelow->above = rowabove;
 
-		free(currow);
+		free(rowtod);
 
 	} else if (rowabove) {
 
 		cellabove = rowabove->cellstart;
 
-		for (curcell=currow->cellstart;curcell;) {
+		for (curcell=rowtod->cellstart;curcell;) {
 			precell = curcell;
 			cellabove->below = NULL;
 			cellabove = cellabove->right;
@@ -346,7 +404,7 @@ void dispose_row(struct Matrix *mat, struct Row *currow) {
 		}
 
 		rowabove->below = NULL;
-		free(currow);
+		free(rowtod);
 
 	} else if (rowbelow) {
 
@@ -359,8 +417,8 @@ void dispose_row(struct Matrix *mat, struct Row *currow) {
 			dispose_cell(curcell);
 		}
 
-		mat->rowstart = currow->below;
-		free(currow);
+		mat->rowstart = rowtod->below;
+		free(rowtod);
 
 	} else {
 
@@ -372,7 +430,7 @@ void dispose_row(struct Matrix *mat, struct Row *currow) {
 			free(precol);
 		}
 
-		free(currow);
+		free(rowtod);
 		mat->rowstart = mat->colstart = NULL;
 
 	}
@@ -383,11 +441,11 @@ struct Row *add_row(struct Matrix *mat, struct Row *rowabove, struct Row *rowbel
 	/* */
 	struct Cell *firstcell = NULL, *cellabove, *cellbelow;
 	struct Cell *precell = NULL, *curcell;
-	struct Colm *curcolhead, *firstcolhead, *precolhead = NULL;
+	struct Colm *curcolhead, *firstcolhead = NULL, *precolhead = NULL;
 	unsigned int i;
 
-	// if (!mat)
-	// 	return NULL;
+	if (!mat)
+		return NULL;
 
 	struct Row *newrow = get_rowhead();
 	newrow->height = DEFAULT_ROW_HEIGHT;
@@ -557,7 +615,9 @@ struct Matrix *make_matrix(unsigned int nrows, unsigned int ncols) {
 		mat->curcol = mat->colstart;
 		mat->currow = mat->rowstart;
 		mat->curcell = mat->rowstart->cellstart;
-		mat->curcellxratio = mat->curcellyratio = 0;
+		mat->curcellxcord = mat->curcellycord = 0;
+		mat->xmax = mat->ymax = 0;
+
 	} else {
 		exit(EXIT_FAILURE);
 	}

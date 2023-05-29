@@ -38,8 +38,12 @@ struct Matrix {
 	uint16_t ncols;
 	uint16_t width;
 	uint16_t height;
+
 	uint16_t curcellxcord;
 	uint16_t curcellycord;
+	uint16_t xmax;
+	uint16_t ymax;
+
 	float curcellxratio;
 	float curcellyratio;
 	struct Cell *curcell;
@@ -53,7 +57,10 @@ struct Matrix {
 
 void dispose_row(struct Matrix *mat, struct Row *currow);
 void dispose_col(struct Matrix *mat, struct Colm *curcol);
+void mvccleft(struct Matrix *mat);
+void mvccright(struct Matrix *mat);
 struct Matrix *make_matrix(unsigned int nrows, unsigned int ncols);
 struct Row *add_row(struct Matrix *mat, struct Row *rowabove, struct Row *rowbelow);
 struct Colm *add_col(struct Matrix *mat, struct Colm *leftcol, struct Colm *rightcol);
+
 
