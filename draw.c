@@ -4,7 +4,7 @@
 #include<stdint.h>
 
 #include "matrix.h"
-#include "drw.h"
+#include "draw.h"
 #include "log.h"
 
 /*
@@ -135,16 +135,16 @@ static int color_schemes[SCHEME_END][ELEMENT_END] = {
 
 static void set_symbols(struct Row *rowstart, struct Row *rowend,
 		struct Colm *colstart, struct Colm *colend, const char *symbols[]);
-static void drw_row_seperator(WINDOW *win,
+static void draw_row_seperator(WINDOW *win,
 		struct Colm *colstart, struct Colm *colend, const char *widesymbol);
-static void drw_row(WINDOW *win,
+static void draw_row(WINDOW *win,
 		struct Colm *colstart, struct Colm *colend, struct Cell *cellstart);
 static void set_colstart(struct Blueprint *bprint);
 static void set_colend(struct Blueprint *bprint);
 static void set_rowstart(struct Blueprint *bprint);
 static void set_rowend(struct Blueprint *bprint);
 static void align_matrix(struct Blueprint *bprint);
-static void drw_matrix(WINDOW *win, struct Blueprint *bprint);
+static void draw_matrix(WINDOW *win, struct Blueprint *bprint);
 
 void init_colorschemes() {
 
@@ -180,7 +180,7 @@ void init_colorschemes() {
 
 }
 
-static void drw_row_seperator(WINDOW *win,
+static void draw_row_seperator(WINDOW *win,
 		struct Colm *colstart, struct Colm *colend, const char *widesymbol) {
 
 	int i;
@@ -262,7 +262,7 @@ static void set_symbols(struct Row *rowstart, struct Row *rowend,
 
 }
 
-static void drw_row(WINDOW *win,
+static void draw_row(WINDOW *win,
 		struct Colm *colstart, struct Colm *colend, struct Cell *cellstart) {
 
 
@@ -360,7 +360,7 @@ static void set_rowend(struct Blueprint *bprint) {
 
 }
 
-void drw_left_matrix(WINDOW *win, struct Matrix *mat,
+void draw_left_matrix(WINDOW *win, struct Matrix *mat,
 		struct Colm *colend, struct Cell *cellstart, int begx) {
 
 	struct Blueprint bprint;
@@ -383,11 +383,11 @@ void drw_left_matrix(WINDOW *win, struct Matrix *mat,
 	set_rowstart(&bprint);
 	set_rowend(&bprint);
 
-	drw_matrix(win, &bprint);
+	draw_matrix(win, &bprint);
 
 }
 
-void drw_right_matrix(WINDOW *win, struct Matrix *mat,
+void draw_right_matrix(WINDOW *win, struct Matrix *mat,
 		struct Colm *colstart, struct Cell *cellstart, int begx) {
 
 	struct Blueprint bprint;
@@ -410,11 +410,11 @@ void drw_right_matrix(WINDOW *win, struct Matrix *mat,
 	set_colend(&bprint);
 	set_rowend(&bprint);
 
-	drw_matrix(win, &bprint);
+	draw_matrix(win, &bprint);
 
 }
 
-void drw_above_matrix(WINDOW *win, struct Matrix *mat,
+void draw_above_matrix(WINDOW *win, struct Matrix *mat,
 		struct Row *rowend, struct Cell *cellstart, int begy) {
 
 	struct Blueprint bprint;
@@ -435,11 +435,11 @@ void drw_above_matrix(WINDOW *win, struct Matrix *mat,
 	set_colstart(&bprint);
 	set_colend(&bprint);
 
-	drw_matrix(win, &bprint);
+	draw_matrix(win, &bprint);
 
 }
 
-void drw_below_matrix(WINDOW *win, struct Matrix *mat,
+void draw_below_matrix(WINDOW *win, struct Matrix *mat,
 		struct Row *rowstart, struct Cell *cellstart, int begy) {
 
 	struct Blueprint bprint;
@@ -460,7 +460,7 @@ void drw_below_matrix(WINDOW *win, struct Matrix *mat,
 	set_rowstart(&bprint);
 	set_colend(&bprint);
 
-	drw_matrix(win, &bprint);
+	draw_matrix(win, &bprint);
 
 }
 
@@ -516,7 +516,7 @@ static void align_matrix(struct Blueprint *bprint) {
 
 }
 
-void drw_whole_matrix(WINDOW *win, struct Matrix *mat) {
+void draw_whole_matrix(WINDOW *win, struct Matrix *mat) {
 
 	struct Blueprint bprint;
 
@@ -578,14 +578,14 @@ void drw_whole_matrix(WINDOW *win, struct Matrix *mat) {
 	set_rowend(&bprint);
 
 	align_matrix(&bprint);
-	drw_matrix(win, &bprint);
+	draw_matrix(win, &bprint);
 
 	mat->curcellxcord = bprint.ccx;
 	mat->curcellycord = bprint.ccy;
 
 }
 
-static void drw_matrix(WINDOW *win, struct Blueprint *bprint) {
+static void draw_matrix(WINDOW *win, struct Blueprint *bprint) {
 
 	struct Row *rowstart = bprint->rowstart;
 	struct Row *rowend = bprint->rowend;
@@ -606,12 +606,12 @@ static void drw_matrix(WINDOW *win, struct Blueprint *bprint) {
 	wattron(win, color_schemes[SCHEME_DEFAULT][ELEMENT_MATRIX_SEPERATOR]);
 
 	wprintw(win, "%s", symbols[TOPLEFT_CORNER]);
-	drw_row_seperator(win, colstart, colend, symbols[TOP_EDGE]);
+	draw_row_seperator(win, colstart, colend, symbols[TOP_EDGE]);
 	wprintw(win, "%s", symbols[TOPRIGHT_CORNER]);
 
 	wmove(win, ++begy, begx);
 	wprintw(win, "%s", char_symbols[CHAR_PIPE]);
-	drw_row(win, colstart, colend, cellstart);
+	draw_row(win, colstart, colend, cellstart);
 	wprintw(win, "%s", char_symbols[CHAR_PIPE]);
 
 	rowstart = rowstart->below;
@@ -622,13 +622,13 @@ static void drw_matrix(WINDOW *win, struct Blueprint *bprint) {
 		wmove(win, ++begy, begx);
 
 		wprintw(win, "%s", symbols[LEFT_EDGE]);
-		drw_row_seperator(win, colstart, colend, char_symbols[CHAR_CROSS]);
+		draw_row_seperator(win, colstart, colend, char_symbols[CHAR_CROSS]);
 		wprintw(win, "%s", symbols[RIGHT_EDGE]);
 
 		wmove(win, ++begy, begx);
 
 		wprintw(win, "%s", char_symbols[CHAR_PIPE]);
-		drw_row(win, colstart, colend, cellstart);
+		draw_row(win, colstart, colend, cellstart);
 		wprintw(win, "%s", char_symbols[CHAR_PIPE]);
 
 		rowstart = rowstart->below;
@@ -637,13 +637,13 @@ static void drw_matrix(WINDOW *win, struct Blueprint *bprint) {
 
 	wmove(win, ++begy, begx);
 	wprintw(win, "%s", symbols[BOTLEFT_CORNER]);
-	drw_row_seperator(win, colstart, colend, symbols[BOT_EDGE]);
+	draw_row_seperator(win, colstart, colend, symbols[BOT_EDGE]);
 	wprintw(win, "%s", symbols[BOTRIGHT_CORNER]);
 
 }
 
 
-void drw_topwin(WINDOW *win) {
+void draw_topwin(WINDOW *win) {
 
 	char *name = " smm ";
 

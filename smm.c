@@ -4,7 +4,7 @@
 #include<stdint.h>
 
 #include "matrix.h"
-#include "drw.h"
+#include "draw.h"
 #include "smm.h"
 #include "log.h"
 
@@ -59,7 +59,7 @@ static void normal_mode() {
 	struct Row *currow = NULL;
 	struct Cell *curcell = NULL;
 
-	drw_topwin(topwin);
+	draw_topwin(topwin);
 
 	mhead = mtail = curmat = make_matrix(3, 3, 1);
 	curcol = curmat->curcol;
@@ -82,7 +82,7 @@ static void normal_mode() {
 	currow = curmat->currow;
 	curcell = curmat->curcell;
 
-	drw_whole_matrix(mainwin, curmat);
+	draw_whole_matrix(mainwin, curmat);
 	change_cell_attr(mainwin, curmat, ELEMENT_MATRIX_SELECTED);
 
 	wrefresh(topwin);
@@ -169,8 +169,8 @@ static void normal_mode() {
 
 		}
 
-		drw_topwin(topwin);
-		drw_whole_matrix(mainwin, curmat);
+		draw_topwin(topwin);
+		draw_whole_matrix(mainwin, curmat);
 
 		change_cell_attr(mainwin, curmat, ELEMENT_MATRIX_SELECTED);
 

@@ -21,7 +21,7 @@
 
 
 /*
- * This will override the predefined colors from 0-7 in the ncurses library
+ * This will override the predefined colors from 1-7 in the ncurses library
  * */
 
 enum Colors {
@@ -136,15 +136,15 @@ struct Blueprint {
 };
 
 
-void init_colorschemes();
-void drw_topwin(WINDOW *win);
-void drw_left_matrix(WINDOW *win, struct Matrix *mat,
+void draw_init_colorschemes();
+void draw_topwin(WINDOW *win);
+void draw_left_matrix(WINDOW *win, struct Matrix *mat,
 		struct Colm *colend, struct Cell *cellstart, int begx);
-void drw_right_matrix(WINDOW *win, struct Matrix *mat,
+void draw_right_matrix(WINDOW *win, struct Matrix *mat,
 		struct Colm *colstart, struct Cell *cellstart, int begx);
-void drw_above_matrix(WINDOW *win, struct Matrix *mat,
+void draw_above_matrix(WINDOW *win, struct Matrix *mat,
 		struct Row *rowend, struct Cell *cellstart, int begy);
-void drw_below_matrix(WINDOW *win, struct Matrix *mat,
+void draw_below_matrix(WINDOW *win, struct Matrix *mat,
 		struct Row *rowstart, struct Cell *cellstart, int begy);
-void drw_whole_matrix(WINDOW *win, struct Matrix *mat);
-void change_cell_attr(WINDOW *win, struct Matrix *mat, int attr_idx);
+void draw_whole_matrix(WINDOW *win, struct Matrix *mat);
+void draw_change_cell_attr(WINDOW *win, struct Matrix *mat, int attr_idx);
