@@ -156,12 +156,12 @@ static struct Colm *get_colhead() {
 	return colhead;
 }
 
-struct Colm *add_col(struct Matrix *mat, struct Colm *leftcol, struct Colm *rightcol) {
+struct Colm *add_col(struct Matrix *mat,
+		struct Colm *leftcol, struct Colm *rightcol, int nrows) {
 
 	struct Cell *firstcell = NULL, *leftcell, *rightcell;
 	struct Cell *precell = NULL, *curcell;
 	struct Row *currowhead, *firstrowhead = NULL, *prerowhead = NULL;
-	unsigned int i;
 
 	if (!mat)
 		return NULL;
@@ -268,7 +268,11 @@ struct Colm *add_col(struct Matrix *mat, struct Colm *leftcol, struct Colm *righ
 
 	} else {
 
-		for (i=mat->nrows;i;i--) {
+		/*
+		 * if nrows is negative this loop won't break
+		 * */
+
+		for (;nrows;nrows--) {
 
 			currowhead = get_rowhead();
 			curcell = get_cell();
@@ -482,12 +486,12 @@ void dispose_row(struct Matrix *mat, struct Row *rowtod) {
 
 }
 
-struct Row *add_row(struct Matrix *mat, struct Row *rowabove, struct Row *rowbelow) {
+struct Row *add_row(struct Matrix *mat,
+		struct Row *rowabove, struct Row *rowbelow, int ncols) {
 	/* */
 	struct Cell *firstcell = NULL, *cellabove, *cellbelow;
 	struct Cell *precell = NULL, *curcell;
 	struct Colm *curcolhead, *firstcolhead = NULL, *precolhead = NULL;
-	unsigned int i;
 
 	if (!mat)
 		return NULL;
@@ -592,7 +596,11 @@ struct Row *add_row(struct Matrix *mat, struct Row *rowabove, struct Row *rowbel
 
 	} else {
 
-		for (i=mat->ncols;i;i--) {
+		/*
+		 * if ncols is negative this loop won't break
+		 * */
+
+		for (;ncols;ncols--) {
 
 			curcolhead = get_colhead();
 			curcell = get_cell();
@@ -649,12 +657,12 @@ struct Matrix *make_matrix(unsigned int nrows, unsigned int ncols) {
 
 	if (mat) {
 		mat->width = 0;
-		mat->ncols = ncols;
+		mat->ncols = 0;
 		mat->nrows = 0;
 		mat->right = mat->left = NULL;
-		prerowhead = add_row(mat, NULL, NULL);
+		prerowhead = add_row(mat, NULL, NULL, ncols);
 		for(i=1;i<nrows;i++) {
-			prerowhead = add_row(mat, prerowhead, NULL);
+			prerowhead = add_row(mat, prerowhead, NULL, 0);
 		}
 
 		mat->curcol = mat->colstart;

@@ -105,7 +105,7 @@ static void normal_mode() {
 				break;
 			case 'L':
 				if (curmat)
-					add_col(curmat, curcol, curcol->right);
+					add_col(curmat, curcol, curcol->right, 0);
 				break;
 			case KEY_UP:
 			case 'k':
@@ -121,7 +121,7 @@ static void normal_mode() {
 				break;
 			case 'K':
 				if (curmat)
-					add_row(curmat, currow, currow->below);
+					add_row(curmat, currow, currow->below, 0);
 				break;
 			case 'n':
 				if (curmat) {

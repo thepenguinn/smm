@@ -63,7 +63,9 @@ void mvccright(struct Matrix *mat);
 void mvccabove(struct Matrix *mat);
 void mvccbelow(struct Matrix *mat);
 struct Matrix *make_matrix(unsigned int nrows, unsigned int ncols);
-struct Row *add_row(struct Matrix *mat, struct Row *rowabove, struct Row *rowbelow);
-struct Colm *add_col(struct Matrix *mat, struct Colm *leftcol, struct Colm *rightcol);
+struct Row *add_row(struct Matrix *mat,
+		struct Row *rowabove, struct Row *rowbelow, int ncols);
+struct Colm *add_col(struct Matrix *mat,
+		struct Colm *leftcol, struct Colm *rightcol, int nrows);
 
 
