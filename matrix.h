@@ -1,7 +1,7 @@
 #include<stdint.h>
 
 // #define DEFAULT_VALUE 0x100
-#define DEFAULT_VALUE 0b000100000000
+#define DEFAULT_VALUE 1
 #define DEFAULT_ROW_HEIGHT 1
 #define DEFAULT_COL_WIDTH 3
 
@@ -62,8 +62,10 @@ void mvccleft(struct Matrix *mat);
 void mvccright(struct Matrix *mat);
 void mvccabove(struct Matrix *mat);
 void mvccbelow(struct Matrix *mat);
-struct Matrix *make_matrix(unsigned int nrows, unsigned int ncols);
+struct Matrix *make_matrix(unsigned int nrows, unsigned int ncols, int value);
+struct Matrix *matrix_multiply(const struct Matrix *leftmat,
+		const struct Matrix *rightmat);
 struct Row *add_row(struct Matrix *mat,
-		struct Row *rowabove, struct Row *rowbelow, int ncols);
+		struct Row *rowabove, struct Row *rowbelow, int ncols, int value);
 struct Colm *add_col(struct Matrix *mat,
-		struct Colm *leftcol, struct Colm *rightcol, int nrows);
+		struct Colm *leftcol, struct Colm *rightcol, int nrows, int value);

@@ -157,7 +157,7 @@ static struct Colm *get_colhead() {
 }
 
 struct Colm *add_col(struct Matrix *mat,
-		struct Colm *leftcol, struct Colm *rightcol, int nrows) {
+		struct Colm *leftcol, struct Colm *rightcol, int nrows, int value) {
 
 	struct Cell *firstcell = NULL, *leftcell, *rightcell;
 	struct Cell *precell = NULL, *curcell;
@@ -194,7 +194,7 @@ struct Colm *add_col(struct Matrix *mat,
 			curcell->right = rightcell;
 			leftcell->right = curcell;
 			rightcell->left = curcell;
-			curcell->value = DEFAULT_VALUE;
+			curcell->value = value;
 
 			precell = curcell;
 			leftcell = leftcell->below;
@@ -225,7 +225,7 @@ struct Colm *add_col(struct Matrix *mat,
 			curcell->left = leftcell;
 			curcell->below = NULL;
 			leftcell->right = curcell;
-			curcell->value = DEFAULT_VALUE;
+			curcell->value = value;
 
 			precell = curcell;
 		}
@@ -256,7 +256,7 @@ struct Colm *add_col(struct Matrix *mat,
 			curcell->left = NULL;
 			curcell->below = NULL;
 			rightcell->left = curcell;
-			curcell->value = DEFAULT_VALUE;
+			curcell->value = value;
 
 			precell = curcell;
 		}
@@ -299,7 +299,7 @@ struct Colm *add_col(struct Matrix *mat,
 			curcell->right = NULL;
 			curcell->left = NULL;
 			curcell->below = NULL;
-			curcell->value = DEFAULT_VALUE;
+			curcell->value = value;
 
 			currowhead->cellstart = curcell;
 
@@ -487,7 +487,7 @@ void dispose_row(struct Matrix *mat, struct Row *rowtod) {
 }
 
 struct Row *add_row(struct Matrix *mat,
-		struct Row *rowabove, struct Row *rowbelow, int ncols) {
+		struct Row *rowabove, struct Row *rowbelow, int ncols, int value) {
 	/* */
 	struct Cell *firstcell = NULL, *cellabove, *cellbelow;
 	struct Cell *precell = NULL, *curcell;
@@ -523,7 +523,7 @@ struct Row *add_row(struct Matrix *mat,
 			curcell->above = cellabove;
 			cellabove->below = curcell;
 			cellbelow->above = curcell;
-			curcell->value = DEFAULT_VALUE;
+			curcell->value = value;
 
 			precell = curcell;
 			cellabove = cellabove->right;
@@ -553,7 +553,7 @@ struct Row *add_row(struct Matrix *mat,
 			curcell->below = NULL;
 			curcell->above = cellabove;
 			cellabove->below = curcell;
-			curcell->value = DEFAULT_VALUE;
+			curcell->value = value;
 
 			precell = curcell;
 		}
@@ -584,7 +584,7 @@ struct Row *add_row(struct Matrix *mat,
 			curcell->above = NULL;
 			curcell->below = cellbelow;
 			cellbelow->above = curcell;
-			curcell->value = DEFAULT_VALUE;
+			curcell->value = value;
 
 			precell = curcell;
 		}
@@ -627,7 +627,7 @@ struct Row *add_row(struct Matrix *mat,
 			curcell->right = NULL;
 			curcell->above = NULL;
 			curcell->below = NULL;
-			curcell->value = DEFAULT_VALUE;
+			curcell->value = value;
 
 			curcolhead->cellstart = curcell;
 
@@ -648,7 +648,62 @@ struct Row *add_row(struct Matrix *mat,
 	return newrow;
 }
 
-struct Matrix *make_matrix(unsigned int nrows, unsigned int ncols) {
+struct Matrix *matrix_multiply(const struct Matrix *leftmat,
+		const struct Matrix *rightmat) {
+
+	struct Matrix *result;
+	struct Row *resrow;
+	struct Cell *rescell;
+	struct Row *lmatrow;
+	struct Colm *rmatcol;
+	struct Cell *lmatcell;
+	struct Cell *rmatcell;
+
+	if (!leftmat || !rightmat)
+		return NULL;
+
+	if (leftmat->ncols != rightmat->nrows)
+		return NULL;
+
+	result = make_matrix(rightmat->nrows, leftmat->ncols, 0);
+
+	resrow = result->rowstart;
+	lmatrow = leftmat->rowstart;
+
+	while (resrow) {
+
+		rescell = resrow->cellstart;
+		rmatcol = rightmat->colstart;
+
+		while (rescell) {
+
+			rmatcell = rmatcol->cellstart;
+			lmatcell = lmatrow->cellstart;
+
+			while (rmatcell) {
+
+				rescell->value += lmatcell->value * rmatcell->value;
+
+				lmatcell = lmatcell->right;
+				rmatcell = rmatcell->below;
+			}
+
+
+			rmatcol = rmatcol->right;
+			rescell = rescell->right;
+		}
+
+		resrow = resrow->below;
+		lmatrow = lmatrow->below;
+
+	}
+
+	return result;
+
+}
+
+
+struct Matrix *make_matrix(unsigned int nrows, unsigned int ncols, int value) {
 
 	struct Matrix *mat = malloc(sizeof(struct Matrix));
 	struct Matrix *last;
@@ -660,9 +715,9 @@ struct Matrix *make_matrix(unsigned int nrows, unsigned int ncols) {
 		mat->ncols = 0;
 		mat->nrows = 0;
 		mat->right = mat->left = NULL;
-		prerowhead = add_row(mat, NULL, NULL, ncols);
+		prerowhead = add_row(mat, NULL, NULL, ncols, value);
 		for(i=1;i<nrows;i++) {
-			prerowhead = add_row(mat, prerowhead, NULL, 0);
+			prerowhead = add_row(mat, prerowhead, NULL, 0, value);
 		}
 
 		mat->curcol = mat->colstart;
@@ -674,6 +729,6 @@ struct Matrix *make_matrix(unsigned int nrows, unsigned int ncols) {
 	} else {
 		exit(EXIT_FAILURE);
 	}
-	
+
 	return mat;
 }

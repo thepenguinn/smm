@@ -61,24 +61,29 @@ static void normal_mode() {
 
 	drw_topwin(topwin);
 
-	mhead = mtail = curmat = make_matrix(10, 30);
+	mhead = mtail = curmat = make_matrix(3, 3, 1);
+	curcol = curmat->curcol;
+	currow = curmat->currow;
+	curcell = curmat->curcell;
+
+	if (curmat) {
+		attach_matrix(make_matrix(3, 3, 1), curmat, curmat->right);
+		curmat = curmat->right;
+	} else {
+		attach_matrix(make_matrix(3, 3, 1), curmat, NULL);
+		curmat = mhead;
+	}
+
+	curmat = curmat->left;
+	attach_matrix(matrix_multiply(curmat, curmat->right), curmat, curmat->right);
+
+	curmat = curmat->right;
 	curcol = curmat->curcol;
 	currow = curmat->currow;
 	curcell = curmat->curcell;
 
 	drw_whole_matrix(mainwin, curmat);
 	change_cell_attr(mainwin, curmat, ELEMENT_MATRIX_SELECTED);
-
-	int i;
-
-	for (i = 0;i < 13;i++)
-		mvccright(curmat);
-
-	drw_whole_matrix(mainwin, curmat);
-
-	wgetch(mainwin);
-
-	drw_whole_matrix(mainwin, curmat);
 
 	wrefresh(topwin);
 	wrefresh(botwin);
@@ -105,7 +110,7 @@ static void normal_mode() {
 				break;
 			case 'L':
 				if (curmat)
-					add_col(curmat, curcol, curcol->right, 0);
+					add_col(curmat, curcol, curcol->right, 0, 0);
 				break;
 			case KEY_UP:
 			case 'k':
@@ -121,14 +126,15 @@ static void normal_mode() {
 				break;
 			case 'K':
 				if (curmat)
-					add_row(curmat, currow, currow->below, 0);
+					add_row(curmat, currow, currow->below, 0, 0);
 				break;
 			case 'n':
+
 				if (curmat) {
-					attach_matrix(make_matrix(3, 3), curmat, curmat->right);
+					attach_matrix(make_matrix(3, 3, 0), curmat, curmat->right);
 					curmat = curmat->right;
 				} else {
-					attach_matrix(make_matrix(3, 3), curmat, NULL);
+					attach_matrix(make_matrix(3, 3, 0), curmat, NULL);
 					curmat = mhead;
 				}
 
