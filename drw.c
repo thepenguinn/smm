@@ -115,8 +115,8 @@ static int color_schemes[SCHEME_END][ELEMENT_END] = {
 		[ELEMENT_MAIN_TITLE_SELECTED]     = ColorPair(PAIR_BRT_PINK_DEFAULT_BG),
 		[ELEMENT_MAIN_INFO_NORMAL]        = ColorPair(PAIR_DIM_WHITE_DEFAULT_BG),
 		[ELEMENT_MAIN_INFO_SELECTED]      = ColorPair(PAIR_DIM_PINK_DEFAULT_BG),
-		[ELEMENT_MATRIX_NORMAL]           = ColorPair(PAIR_DIM_WHITE_DEFAULT_BG),
-		[ELEMENT_MATRIX_SELECTED]         = ColorPair(PAIR_BRT_WHITE_DEFAULT_BG),
+		[ELEMENT_MATRIX_NORMAL]           = ColorPair(PAIR_DIM_WHITE_DEFAULT_BG) | A_NORMAL,
+		[ELEMENT_MATRIX_SELECTED]         = ColorPair(PAIR_BRT_WHITE_DEFAULT_BG) | A_BOLD,
 		[ELEMENT_MATRIX_SEPERATOR]        = ColorPair(PAIR_DIM_BROWN_DEFAULT_BG),
 		[ELEMENT_DOTS_NORMAL]             = ColorPair(PAIR_DIM_GREY_DEFAULT_BG),
 		[ELEMENT_DOTS_SELECTED]           = ColorPair(PAIR_DIM_WHITE_DEFAULT_BG),
@@ -288,7 +288,6 @@ static void drw_row(WINDOW *win,
 	}
 
 }
-
 
 static void set_colstart(struct Blueprint *bprint) {
 
@@ -483,7 +482,7 @@ static void align_matrix(struct Blueprint *bprint) {
 		bprint->begx = 0;
 		set_colend(bprint);
 
-	} else if (bprint->colend->right) {
+	} else if (!bprint->colend->right) {
 
 		bprint->ccx = bprint->ccx + (bprint->xmax - bprint->endx);
 		bprint->begx = bprint->begx + (bprint->xmax - bprint->endx);

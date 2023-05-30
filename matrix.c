@@ -25,14 +25,13 @@ void mvccright(struct Matrix *mat) {
 		mat->curcell = mat->curcell->right;
 
 		/* checking whether the right column fits the screen */
-		if (newx + mat->curcol->width + 3 >= mat->xmax)
-			/* that - 1 is because the xmax is the number of columns */
-			newx = mat->xmax - mat->curcol->width - 3;
+		if (newx + mat->curcol->width + 3 > mat->xmax)
+			newx = mat->curcellxcord;
+			//newx = mat->xmax - mat->curcol->width - 3;
 
 		mat->curcellxcord = newx;
 
 	}
-
 
 }
 
@@ -51,9 +50,55 @@ void mvccleft(struct Matrix *mat) {
 		/* checking whether the left column fits the screen */
 		newx = newx - mat->curcol->width - 3;
 		if (newx < 0)
-			newx = 0;
+			newx = mat->curcellxcord;
 
 		mat->curcellxcord = newx;
+
+	}
+
+}
+
+
+void mvccbelow(struct Matrix *mat) {
+
+	int newy;
+
+	if (mat->currow->below) {
+
+		/* starting ycord of the row below */
+		newy = mat->curcellycord + mat->currow->height + 1;
+
+		mat->currow = mat->currow->below;
+		mat->curcell = mat->curcell->below;
+
+		/* checking whether the row below fits the screen */
+		if (newy + mat->currow->height + 1 > mat->ymax)
+			newy = mat->curcellycord;
+			//newy = mat->ymax - mat->currow->height - 1;
+
+		mat->curcellycord = newy;
+
+	}
+
+
+}
+
+void mvccabove(struct Matrix *mat) {
+
+	int newy;
+
+	if (mat->currow->above) {
+
+		newy = mat->curcellycord;
+
+		mat->currow = mat->currow->above;
+		mat->curcell = mat->curcell->above;
+
+		newy = newy - mat->currow->height - 1;
+		if (newy < 0)
+			newy = mat->curcellycord;
+
+		mat->curcellycord = newy;
 
 	}
 

@@ -61,32 +61,22 @@ static void normal_mode() {
 
 	drw_topwin(topwin);
 
-	mhead = mtail = curmat = make_matrix(3, 10);
+	mhead = mtail = curmat = make_matrix(10, 30);
 	curcol = curmat->curcol;
 	currow = curmat->currow;
 	curcell = curmat->curcell;
 
 	drw_whole_matrix(mainwin, curmat);
-	wrefresh(mainwin);
+	change_cell_attr(mainwin, curmat, ELEMENT_MATRIX_SELECTED);
 
-	while ((event = wgetch(mainwin)) != 'q') {
+	int i;
 
-		if (event == KEY_RESIZE)
-			resize_windows();
+	for (i = 0;i < 13;i++)
+		mvccright(curmat);
 
-		drw_topwin(topwin);
+	drw_whole_matrix(mainwin, curmat);
 
-		drw_whole_matrix(mainwin, curmat);
-
-		wrefresh(topwin);
-		wrefresh(botwin);
-		wrefresh(mainwin);
-
-	}
-
-	endwin();
-	exit(EXIT_FAILURE);
-
+	wgetch(mainwin);
 
 	drw_whole_matrix(mainwin, curmat);
 
@@ -94,31 +84,16 @@ static void normal_mode() {
 	wrefresh(botwin);
 	wrefresh(mainwin);
 
-	// change_cell_attr(mainwin, curmat, ELEMENT_MATRIX_NORMAL);
-	// mvccright(curmat);
-	// change_cell_attr(mainwin, curmat, ELEMENT_MATRIX_SELECTED);
-
-	// drw_whole_matrix(mainwin, curmat);
-	// change_cell_attr(mainwin, curmat, ELEMENT_MATRIX_SELECTED);
-	// mvccright(curmat);
-	// drw_whole_matrix(mainwin, curmat);
-
-	// drw_whole_matrix(mainwin, curmat);
-	// mvccright(curmat);
-	// wrefresh(mainwin);
-
-	// mvccright(curmat);
-	// drw_whole_matrix(mainwin, curmat);
-	// wrefresh(mainwin);
-
 	while ((event = wgetch(mainwin)) != 'q') {
 
 		switch (event) {
+			case KEY_LEFT:
 			case 'h':
 				// change_cell_attr(mainwin, curmat, ELEMENT_MATRIX_NORMAL);
 				mvccleft(curmat);
 				// change_cell_attr(mainwin, curmat, ELEMENT_MATRIX_SELECTED);
 				break;
+			case KEY_RIGHT:
 			case 'l':
 				// change_cell_attr(mainwin, curmat, ELEMENT_MATRIX_NORMAL);
 				mvccright(curmat);
@@ -132,11 +107,19 @@ static void normal_mode() {
 				if (curmat)
 					add_col(curmat, curcol, curcol->right);
 				break;
+			case KEY_UP:
+			case 'k':
+				mvccabove(curmat);
+				break;
 			case 'j':
+			case KEY_DOWN:
+				mvccbelow(curmat);
+				break;
+			case 'J':
 				if (currow && currow->below)
 					dispose_row(curmat, currow->below);
 				break;
-			case 'k':
+			case 'K':
 				if (curmat)
 					add_row(curmat, currow, currow->below);
 				break;
@@ -180,12 +163,9 @@ static void normal_mode() {
 
 		}
 
-		smm_log(DEBUG, "did pass switch");
-
 		drw_topwin(topwin);
 		drw_whole_matrix(mainwin, curmat);
 
-		smm_log(DEBUG, "its not drw_whole_matrix");
 		change_cell_attr(mainwin, curmat, ELEMENT_MATRIX_SELECTED);
 
 		wrefresh(topwin);
@@ -248,10 +228,10 @@ int main () {
 	clear();
 	noecho();
 	keypad(stdscr, TRUE);
-	if (has_colors())
-		init_colorschemes();
+	// if (has_colors())
+	// 	init_colorschemes();
 
-	curs_set(0);
+	// curs_set(0);
 
 	create_windows();
 
