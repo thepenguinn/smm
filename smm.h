@@ -1,5 +1,3 @@
-
-
 static unsigned int edge_pad_vertical = 3;
 static unsigned int edge_pad_horizontal = 1;
 static unsigned int topwin_nlines = 3;

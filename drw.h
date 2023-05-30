@@ -1,4 +1,3 @@
-
 /*
  * TODO: Need to make these as variables so they can be tweaked from the
  * command line arguments and config file
@@ -149,4 +148,3 @@ void drw_below_matrix(WINDOW *win, struct Matrix *mat,
 		struct Row *rowstart, struct Cell *cellstart, int begy);
 void drw_whole_matrix(WINDOW *win, struct Matrix *mat);
 void change_cell_attr(WINDOW *win, struct Matrix *mat, int attr_idx);
-

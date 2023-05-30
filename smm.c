@@ -22,7 +22,7 @@ static void resize_windows();
 /*
  * need this one to change cursor shape *
  * fputs("\033[6 q", stdout);
- * fflush(stdout); 
+ * fflush(stdout);
  * */
 
 static void attach_matrix(struct Matrix *mattoattach, struct Matrix *leftmat, struct Matrix *rightmat) {
@@ -223,7 +223,7 @@ static void create_windows() {
 int main () {
 
 	init_logger();
-	
+
 	initscr();
 	clear();
 	noecho();
@@ -240,5 +240,3 @@ int main () {
 	endwin();
 	printf("\033[2 q");
 }
-
-

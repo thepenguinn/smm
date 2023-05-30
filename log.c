@@ -48,5 +48,3 @@ void smm_log(int log_level, const char * fmt, ...) {
 
 	fflush(logfile);
 }
-
-

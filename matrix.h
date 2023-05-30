@@ -67,5 +67,3 @@ struct Row *add_row(struct Matrix *mat,
 		struct Row *rowabove, struct Row *rowbelow, int ncols);
 struct Colm *add_col(struct Matrix *mat,
 		struct Colm *leftcol, struct Colm *rightcol, int nrows);
-
-

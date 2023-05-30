@@ -18,7 +18,7 @@ char char_space    = ' ' ;
 */
 
 /*
-char *char_symbols[] = { 
+char *char_symbols[] = {
 	[CHAR_CORNER_TOPLEFT]   = "+",
 	[CHAR_CORNER_TOPRIGHT]  = "+",
 	[CHAR_CORNER_BOTRIGHT]  = "+",
@@ -208,10 +208,10 @@ static void set_symbols(struct Row *rowstart, struct Row *rowend,
 	struct Colm *colend;
 	*/
 
-	/* 
+	/*
 	 * I know this is probably inefficient but I think its more readable... I guess... :)
 	 * */
-	
+
 	if (rowstart->above && colstart->left) {
 		symbols[TOP_EDGE] = symbols[LEFT_EDGE] = symbols[TOPLEFT_CORNER] = char_symbols[CHAR_CROSS];
 	} else if (rowstart->above) {
@@ -239,7 +239,7 @@ static void set_symbols(struct Row *rowstart, struct Row *rowend,
 		symbols[BOT_EDGE] = char_symbols[CHAR_EDGE_BOT];
 		symbols[RIGHT_EDGE] = char_symbols[CHAR_EDGE_RIGHT];
 	}
-	
+
 	if (rowstart->above && colend->right) {
 		symbols[TOPRIGHT_CORNER] = char_symbols[CHAR_CROSS];
 	} else if (rowstart->above) {
@@ -568,7 +568,7 @@ void drw_whole_matrix(WINDOW *win, struct Matrix *mat) {
 
 	bprint.ccx = bprint.begx;
 	bprint.ccy = bprint.begy;
-	
+
 	bprint.endx = bprint.begx + bprint.colstart->width + 3;
 	bprint.endy = bprint.begy + bprint.rowstart->height + 1;
 
@@ -657,7 +657,7 @@ void drw_topwin(WINDOW *win) {
 }
 
 void change_cell_attr(WINDOW *win, struct Matrix *mat, int attr_idx) {
-	
+
 	unsigned int ccx, ccy;
 
 	ccx = mat->curcellxcord;
@@ -665,7 +665,7 @@ void change_cell_attr(WINDOW *win, struct Matrix *mat, int attr_idx) {
 
 	ccx += 2;
 	ccy += 1;
-	
+
 	wmove(win, ccy, ccx);
 
 	wchgat(win, mat->curcol->width, color_schemes[SCHEME_DEFAULT][attr_idx], 0, NULL);
