@@ -12,7 +12,7 @@ static struct Row *get_rowhead(void);
 // guess ill go to mars;
 
 
-void mvccright(struct Matrix *mat) {
+void matrix_mvcc_right(struct Matrix *mat) {
 
 	int newx;
 
@@ -35,7 +35,7 @@ void mvccright(struct Matrix *mat) {
 
 }
 
-void mvccleft(struct Matrix *mat) {
+void matrix_mvcc_left(struct Matrix *mat) {
 
 	int newx;
 
@@ -59,7 +59,7 @@ void mvccleft(struct Matrix *mat) {
 }
 
 
-void mvccbelow(struct Matrix *mat) {
+void matrix_mvcc_below(struct Matrix *mat) {
 
 	int newy;
 
@@ -83,7 +83,7 @@ void mvccbelow(struct Matrix *mat) {
 
 }
 
-void mvccabove(struct Matrix *mat) {
+void matrix_mvcc_above(struct Matrix *mat) {
 
 	int newy;
 
@@ -156,7 +156,7 @@ static struct Colm *get_colhead(void) {
 	return colhead;
 }
 
-struct Colm *add_col(struct Matrix *mat,
+struct Colm *matrix_add_col(struct Matrix *mat,
 		struct Colm *leftcol, struct Colm *rightcol, int nrows, int value) {
 
 	struct Cell *firstcell = NULL, *leftcell, *rightcell;
@@ -323,7 +323,7 @@ struct Colm *add_col(struct Matrix *mat,
 
 }
 
-void dispose_col(struct Matrix *mat, struct Colm *coltod) {
+void matrix_dispose_col(struct Matrix *mat, struct Colm *coltod) {
 
 	struct Colm *leftcol, *rightcol;
 	struct Cell *curcell, *precell, *leftcell, *rightcell;
@@ -407,7 +407,7 @@ void dispose_col(struct Matrix *mat, struct Colm *coltod) {
 
 }
 
-void dispose_row(struct Matrix *mat, struct Row *rowtod) {
+void matrix_dispose_row(struct Matrix *mat, struct Row *rowtod) {
 
 	struct Row *rowbelow, *rowabove;
 	struct Cell *curcell, *precell, *cellabove, *cellbelow;
@@ -489,7 +489,7 @@ void dispose_row(struct Matrix *mat, struct Row *rowtod) {
 
 }
 
-struct Row *add_row(struct Matrix *mat,
+struct Row *matrix_add_row(struct Matrix *mat,
 		struct Row *rowabove, struct Row *rowbelow, int ncols, int value) {
 	/* */
 	struct Cell *firstcell = NULL, *cellabove, *cellbelow;
@@ -669,7 +669,7 @@ struct Matrix *matrix_multiply(const struct Matrix *leftmat,
 	if (leftmat->ncols != rightmat->nrows)
 		return NULL;
 
-	result = make_matrix(rightmat->nrows, leftmat->ncols, 0);
+	result = matrix_create(rightmat->nrows, leftmat->ncols, 0);
 
 	resrow = result->rowstart;
 	lmatrow = leftmat->rowstart;
@@ -707,14 +707,14 @@ struct Matrix *matrix_multiply(const struct Matrix *leftmat,
 }
 
 
-struct Matrix *make_matrix(int nrows, int ncols, int value) {
+struct Matrix *matrix_create(int nrows, int ncols, int value) {
 
 	struct Matrix *mat = malloc(sizeof(struct Matrix));
 	struct Row *prerowhead;
 	int i;
 
 	if (nrows <= 0 || ncols <= 0) {
-		smm_log(WARN, "make_matrix was called with nrows: %d and ncols: %d", nrows, ncols);
+		smm_log(WARN, "matrix_create was called with nrows: %d and ncols: %d", nrows, ncols);
 		return NULL;
 	}
 
@@ -723,9 +723,9 @@ struct Matrix *make_matrix(int nrows, int ncols, int value) {
 		mat->ncols = 0;
 		mat->nrows = 0;
 		mat->right = mat->left = NULL;
-		prerowhead = add_row(mat, NULL, NULL, ncols, value);
+		prerowhead = matrix_add_row(mat, NULL, NULL, ncols, value);
 		for(i=1;i<nrows;i++) {
-			prerowhead = add_row(mat, prerowhead, NULL, 0, value);
+			prerowhead = matrix_add_row(mat, prerowhead, NULL, 0, value);
 		}
 
 		mat->curcol = mat->colstart;

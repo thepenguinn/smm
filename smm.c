@@ -59,16 +59,16 @@ static void normal_mode(void) {
 
 	draw_topwin(topwin);
 
-	mhead = mtail = curmat = make_matrix(3, 3, 1);
+	mhead = mtail = curmat = matrix_create(3, 3, 1);
 	curcol = curmat->curcol;
 	currow = curmat->currow;
 	//   curcell = curmat->curcell;
 
 	if (curmat) {
-		attach_matrix(make_matrix(3, 3, 1), curmat, curmat->right);
+		attach_matrix(matrix_create(3, 3, 1), curmat, curmat->right);
 		curmat = curmat->right;
 	} else {
-		attach_matrix(make_matrix(3, 3, 1), curmat, NULL);
+		attach_matrix(matrix_create(3, 3, 1), curmat, NULL);
 		curmat = mhead;
 	}
 
@@ -92,47 +92,43 @@ static void normal_mode(void) {
 		switch (event) {
 			case KEY_LEFT:
 			case 'h':
-				// change_cell_attr(mainwin, curmat, ELEMENT_MATRIX_NORMAL);
-				mvccleft(curmat);
-				// change_cell_attr(mainwin, curmat, ELEMENT_MATRIX_SELECTED);
+				matrix_mvcc_left(curmat);
 				break;
 			case KEY_RIGHT:
 			case 'l':
-				// change_cell_attr(mainwin, curmat, ELEMENT_MATRIX_NORMAL);
-				mvccright(curmat);
-				// change_cell_attr(mainwin, curmat, ELEMENT_MATRIX_SELECTED);
+				matrix_mvcc_right(curmat);
 				break;
 			case 'H':
 				if (curcol && curcol->right)
-					dispose_col(curmat, curcol->right);
+					matrix_dispose_col(curmat, curcol->right);
 				break;
 			case 'L':
 				if (curmat)
-					add_col(curmat, curcol, curcol->right, 0, 0);
+					matrix_add_col(curmat, curcol, curcol->right, 0, 0);
 				break;
 			case KEY_UP:
 			case 'k':
-				mvccabove(curmat);
+				matrix_mvcc_above(curmat);
 				break;
 			case 'j':
 			case KEY_DOWN:
-				mvccbelow(curmat);
+				matrix_mvcc_below(curmat);
 				break;
 			case 'J':
 				if (currow && currow->below)
-					dispose_row(curmat, currow->below);
+					matrix_dispose_row(curmat, currow->below);
 				break;
 			case 'K':
 				if (curmat)
-					add_row(curmat, currow, currow->below, 0, 0);
+					matrix_add_row(curmat, currow, currow->below, 0, 0);
 				break;
 			case 'n':
 
 				if (curmat) {
-					attach_matrix(make_matrix(3, 3, 0), curmat, curmat->right);
+					attach_matrix(matrix_create(3, 3, 0), curmat, curmat->right);
 					curmat = curmat->right;
 				} else {
-					attach_matrix(make_matrix(3, 3, 0), curmat, NULL);
+					attach_matrix(matrix_create(3, 3, 0), curmat, NULL);
 					curmat = mhead;
 				}
 

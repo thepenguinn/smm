@@ -56,16 +56,16 @@ struct Matrix {
 	struct Matrix *right;
 };
 
-void dispose_row(struct Matrix *mat, struct Row *currow);
-void dispose_col(struct Matrix *mat, struct Colm *curcol);
-void mvccleft(struct Matrix *mat);
-void mvccright(struct Matrix *mat);
-void mvccabove(struct Matrix *mat);
-void mvccbelow(struct Matrix *mat);
-struct Matrix *make_matrix(int nrows, int ncols, int value);
+void matrix_dispose_row(struct Matrix *mat, struct Row *currow);
+void matrix_dispose_col(struct Matrix *mat, struct Colm *curcol);
+void matrix_mvcc_left(struct Matrix *mat);
+void matrix_mvcc_right(struct Matrix *mat);
+void matrix_mvcc_above(struct Matrix *mat);
+void matrix_mvcc_below(struct Matrix *mat);
+struct Matrix *matrix_create(int nrows, int ncols, int value);
 struct Matrix *matrix_multiply(const struct Matrix *leftmat,
 		const struct Matrix *rightmat);
-struct Row *add_row(struct Matrix *mat,
+struct Row *matrix_add_row(struct Matrix *mat,
 		struct Row *rowabove, struct Row *rowbelow, int ncols, int value);
-struct Colm *add_col(struct Matrix *mat,
+struct Colm *matrix_add_col(struct Matrix *mat,
 		struct Colm *leftcol, struct Colm *rightcol, int nrows, int value);
