@@ -136,7 +136,7 @@ struct Blueprint {
 };
 
 
-void draw_init_colorschemes();
+void draw_init_colorschemes(void);
 void draw_topwin(WINDOW *win);
 void draw_left_matrix(WINDOW *win, struct Matrix *mat,
 		struct Colm *colend, struct Cell *cellstart, int begx);

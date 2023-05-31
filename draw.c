@@ -76,7 +76,7 @@ Notes            ╳
   */
 
 
-static char *colors[COLOR_END] = {
+static const char *colors[COLOR_END] = {
 	[COLOR_BRT_PINK]     = "#EF6FF9",
 	[COLOR_BRT_YELLOW]   = "#EBF980",
 	[COLOR_BRT_WHITE]    = "#DDDDDD",
@@ -146,9 +146,9 @@ static void set_rowend(struct Blueprint *bprint);
 static void align_matrix(struct Blueprint *bprint);
 static void draw_matrix(WINDOW *win, struct Blueprint *bprint);
 
-void init_colorschemes() {
+void draw_init_colorschemes(void) {
 
-	char *hexstring;
+	const char *hexstring;
 	int r, g, b;
 	int i;
 
@@ -645,7 +645,7 @@ static void draw_matrix(WINDOW *win, struct Blueprint *bprint) {
 
 void draw_topwin(WINDOW *win) {
 
-	char *name = " smm ";
+	char name[] = " smm ";
 
 	wmove(win, 0, 0);
 	wattron(win, color_schemes[SCHEME_DEFAULT][ELEMENT_TITLE]);
@@ -656,7 +656,7 @@ void draw_topwin(WINDOW *win) {
 
 }
 
-void change_cell_attr(WINDOW *win, struct Matrix *mat, int attr_idx) {
+void draw_change_cell_attr(WINDOW *win, struct Matrix *mat, int attr_idx) {
 
 	unsigned int ccx, ccy;
 

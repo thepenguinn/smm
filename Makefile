@@ -1,16 +1,37 @@
 # A simple makefile
 
-smm: smm.o matrix.o drw.o log.o
-	gcc -o $@ -g -lncurses smm.o matrix.o drw.o log.c
+.POSIX:
+.SUFFIXES:
 
-smm.o: smm.c smm.h matrix.h drw.h log.h
-	gcc -c -g -lncurses smm.c
+include config.mk
 
-matrix.o: matrix.c matrix.h drw.h log.h
-	gcc -c -g matrix.c
+release:
 
-drw.o: drw.c matrix.h drw.h log.h
-	gcc -c -g -lncurses drw.c
+ifeq ($(HAVEDEBUGINFO), debug_info)
+release: clean
+else
+debug: clean
+endif
 
+release: smm
+
+debug: LDFLAGS += $(DBGFLAGS)
+debug: CFLAGS += $(DBGFLAGS)
+debug: smm
+
+smm: $(OBJ)
+	$(CC) -o $@ $(LDFLAGS) $(OBJ) $(LDLIBS)
+
+.SUFFIXES: .c .o
+.c.o:
+	$(CC) $(CFLAGS) -c $<
+
+smm.o: smm.c smm.h matrix.h draw.h log.h
+matrix.o: matrix.c matrix.h draw.h log.h
+draw.o: draw.c matrix.h draw.h log.h
 log.o: log.c log.h
-	gcc -c -g log.c
+
+clean:
+	rm -f $(OBJ)
+
+.PHONY: debug release clean

@@ -5,7 +5,7 @@
 
 static FILE *logfile = NULL;
 
-void init_logger() {
+void init_logger(void) {
 
 	static int nevercallmeagain = 0;
 
@@ -27,7 +27,7 @@ void init_logger() {
 
 }
 
-void smm_log(int log_level, const char * fmt, ...) {
+void smm_log(int log_level, const char *fmt, ...) {
 
 	va_list ap;
 

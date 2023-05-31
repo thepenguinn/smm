@@ -8,16 +8,14 @@
 #include "smm.h"
 #include "log.h"
 
-// guess ill go to mars;
-
-static int main_window_content = MAIN_MENU;
+// static int main_window_content = MAIN_MENU;
 
 static struct Matrix *mhead = NULL;
 static struct Matrix *mtail = NULL;
 
-static void create_windows();
-static void normal_mode();
-static void resize_windows();
+static void create_windows(void);
+static void normal_mode(void);
+static void resize_windows(void);
 
 /*
  * need this one to change cursor shape *
@@ -51,20 +49,20 @@ static void attach_matrix(struct Matrix *mattoattach, struct Matrix *leftmat, st
 
 }
 
-static void normal_mode() {
+static void normal_mode(void) {
 
 	int event;
 	struct Matrix *curmat = NULL;
 	struct Colm *curcol = NULL;
 	struct Row *currow = NULL;
-	struct Cell *curcell = NULL;
+	//   struct Cell *curcell = NULL;
 
 	draw_topwin(topwin);
 
 	mhead = mtail = curmat = make_matrix(3, 3, 1);
 	curcol = curmat->curcol;
 	currow = curmat->currow;
-	curcell = curmat->curcell;
+	//   curcell = curmat->curcell;
 
 	if (curmat) {
 		attach_matrix(make_matrix(3, 3, 1), curmat, curmat->right);
@@ -80,10 +78,10 @@ static void normal_mode() {
 	curmat = curmat->right;
 	curcol = curmat->curcol;
 	currow = curmat->currow;
-	curcell = curmat->curcell;
+	//   curcell = curmat->curcell;
 
 	draw_whole_matrix(mainwin, curmat);
-	change_cell_attr(mainwin, curmat, ELEMENT_MATRIX_SELECTED);
+	draw_change_cell_attr(mainwin, curmat, ELEMENT_MATRIX_SELECTED);
 
 	wrefresh(topwin);
 	wrefresh(botwin);
@@ -140,7 +138,7 @@ static void normal_mode() {
 
 				curcol = curmat->curcol;
 				currow = curmat->currow;
-				curcell = curmat->curcell;
+				//   curcell = curmat->curcell;
 
 				break;
 			case 'P':
@@ -148,7 +146,7 @@ static void normal_mode() {
 					curmat = curmat->left;
 					curcol = curmat->curcol;
 					currow = curmat->currow;
-					curcell = curmat->curcell;
+					//   curcell = curmat->curcell;
 
 				}
 				break;
@@ -158,7 +156,7 @@ static void normal_mode() {
 					curmat = curmat->right;
 					curcol = curmat->curcol;
 					currow = curmat->currow;
-					curcell = curmat->curcell;
+					//   curcell = curmat->curcell;
 
 				}
 				break;
@@ -172,7 +170,7 @@ static void normal_mode() {
 		draw_topwin(topwin);
 		draw_whole_matrix(mainwin, curmat);
 
-		change_cell_attr(mainwin, curmat, ELEMENT_MATRIX_SELECTED);
+		draw_change_cell_attr(mainwin, curmat, ELEMENT_MATRIX_SELECTED);
 
 		wrefresh(topwin);
 		wrefresh(botwin);
@@ -180,7 +178,7 @@ static void normal_mode() {
 	}
 }
 
-static void resize_windows() {
+static void resize_windows(void) {
 
 	int xmax, ymax;
 
@@ -201,7 +199,7 @@ static void resize_windows() {
 
 }
 
-static void create_windows() {
+static void create_windows(void) {
 
 	int xmax, ymax;
 
@@ -226,7 +224,7 @@ static void create_windows() {
 }
 
 
-int main () {
+int main (void) {
 
 	init_logger();
 
@@ -234,15 +232,20 @@ int main () {
 	clear();
 	noecho();
 	keypad(stdscr, TRUE);
-	// if (has_colors())
-	// 	init_colorschemes();
 
-	// curs_set(0);
+#ifndef __DEBUG__
+
+	if (has_colors())
+		draw_init_colorschemes();
+
+	curs_set(0);
+
+#endif
 
 	create_windows();
 
 	normal_mode();
 
 	endwin();
-	printf("\033[2 q");
+
 }

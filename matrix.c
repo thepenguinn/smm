@@ -5,9 +5,9 @@
 #include "log.h"
 
 static void dispose_cell(struct Cell *cell);
-static struct Cell *get_cell();
-static struct Colm *get_colhead();
-static struct Row *get_rowhead();
+static struct Cell *get_cell(void);
+static struct Colm *get_colhead(void);
+static struct Row *get_rowhead(void);
 
 // guess ill go to mars;
 
@@ -104,7 +104,7 @@ void mvccabove(struct Matrix *mat) {
 
 }
 
-static struct Cell *get_cell() {
+static struct Cell *get_cell(void) {
 
 	struct Cell *ccell;
 	ccell = malloc(sizeof(struct Cell));
@@ -128,7 +128,7 @@ static void dispose_cell(struct Cell *cell) {
 
 }
 
-static struct Row *get_rowhead() {
+static struct Row *get_rowhead(void) {
 
 	struct Row *rowhead = NULL;
 
@@ -142,7 +142,7 @@ static struct Row *get_rowhead() {
 	return rowhead;
 }
 
-static struct Colm *get_colhead() {
+static struct Colm *get_colhead(void) {
 
 	struct Colm *colhead = NULL;
 
@@ -162,11 +162,12 @@ struct Colm *add_col(struct Matrix *mat,
 	struct Cell *firstcell = NULL, *leftcell, *rightcell;
 	struct Cell *precell = NULL, *curcell;
 	struct Row *currowhead, *firstrowhead = NULL, *prerowhead = NULL;
+	struct Colm *newcol;
 
 	if (!mat)
 		return NULL;
 
-	struct Colm *newcol = get_colhead();
+	newcol = get_colhead();
 	newcol->width = DEFAULT_COL_WIDTH;
 	newcol->widecell = NULL;
 
@@ -397,7 +398,8 @@ void dispose_col(struct Matrix *mat, struct Colm *coltod) {
 		}
 
 		free(coltod);
-		mat->rowstart = mat->colstart = NULL;
+		mat->rowstart = NULL;
+		mat->colstart = NULL;
 
 	}
 
@@ -480,7 +482,8 @@ void dispose_row(struct Matrix *mat, struct Row *rowtod) {
 		}
 
 		free(rowtod);
-		mat->rowstart = mat->colstart = NULL;
+		mat->rowstart = NULL;
+		mat->colstart = NULL;
 
 	}
 
@@ -492,11 +495,12 @@ struct Row *add_row(struct Matrix *mat,
 	struct Cell *firstcell = NULL, *cellabove, *cellbelow;
 	struct Cell *precell = NULL, *curcell;
 	struct Colm *curcolhead, *firstcolhead = NULL, *precolhead = NULL;
+	struct Row *newrow;
 
 	if (!mat)
 		return NULL;
 
-	struct Row *newrow = get_rowhead();
+	newrow = get_rowhead();
 	newrow->height = DEFAULT_ROW_HEIGHT;
 	newrow->highcell = NULL;
 
@@ -703,12 +707,16 @@ struct Matrix *matrix_multiply(const struct Matrix *leftmat,
 }
 
 
-struct Matrix *make_matrix(unsigned int nrows, unsigned int ncols, int value) {
+struct Matrix *make_matrix(int nrows, int ncols, int value) {
 
 	struct Matrix *mat = malloc(sizeof(struct Matrix));
-	struct Matrix *last;
 	struct Row *prerowhead;
 	int i;
+
+	if (nrows <= 0 || ncols <= 0) {
+		smm_log(WARN, "make_matrix was called with nrows: %d and ncols: %d", nrows, ncols);
+		return NULL;
+	}
 
 	if (mat) {
 		mat->width = 0;
