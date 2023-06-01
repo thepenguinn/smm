@@ -9,6 +9,24 @@ static struct Cell *get_cell(void);
 static struct Colm *get_colhead(void);
 static struct Row *get_rowhead(void);
 
+static struct Row *add_row_bot(struct Matrix *mat,
+		struct Row *rowabove, int value);
+static struct Row *add_row_top(struct Matrix *mat,
+		struct Row *rowbelow, int value);
+static struct Row *add_row_mid(struct Matrix *mat,
+		struct Row *rowabove, struct Row *rowbelow, int value);
+static struct Row *add_initial_row(struct Matrix *mat,
+		int ncols, int value);
+
+static struct Colm *add_col_left(struct Matrix *mat,
+		struct Colm *rightcol, int value);
+static struct Colm *add_col_right(struct Matrix *mat,
+		struct Colm *leftcol, int value);
+static struct Colm *add_col_mid(struct Matrix *mat,
+		struct Colm *leftcol, struct Colm *rightcol, int value);
+static struct Colm *add_initial_col(struct Matrix *mat,
+		int nrows, int value);
+
 // guess ill go to mars;
 
 
@@ -156,170 +174,228 @@ static struct Colm *get_colhead(void) {
 	return colhead;
 }
 
-struct Colm *matrix_add_col(struct Matrix *mat,
-		struct Colm *leftcol, struct Colm *rightcol, int nrows, int value) {
+static struct Colm *add_col_left(struct Matrix *mat,
+		struct Colm *rightcol, int value) {
 
-	struct Cell *firstcell = NULL, *leftcell, *rightcell;
+	struct Cell *firstcell = NULL, *rightcell;
 	struct Cell *precell = NULL, *curcell;
-	struct Row *currowhead, *firstrowhead = NULL, *prerowhead = NULL;
+	struct Row *currowhead;
 	struct Colm *newcol;
-
-	if (!mat)
-		return NULL;
 
 	newcol = get_colhead();
 	newcol->width = DEFAULT_COL_WIDTH;
 	newcol->widecell = NULL;
 
-	if (leftcol && rightcol) {
+	rightcell = rightcol->cellstart;
+	currowhead = mat->rowstart;
 
-		leftcell = leftcol->cellstart;
-		rightcell = rightcol->cellstart;
-
-		/* leftcell and rightcell will always have NULL or a pointer
-		 * at the same time, so we only need to check one
-		 * */
-
-		for (;leftcell;) {
-			curcell = get_cell();
-
-			curcell->above = precell;
-			if (!firstcell) {
-				firstcell = curcell;
-			}
-			if (precell) {
-				precell->below = curcell;
-			}
-			curcell->below = NULL;
-			curcell->left = leftcell;
-			curcell->right = rightcell;
-			leftcell->right = curcell;
-			rightcell->left = curcell;
-			curcell->value = value;
-
-			precell = curcell;
-			leftcell = leftcell->below;
-			rightcell = rightcell->below;
-		}
-
-		newcol->left = leftcol;
-		leftcol->right = newcol;
-		newcol->right = rightcol;
-		rightcol->left = newcol;
-
-	} else if (leftcol) {
-
-		 leftcell = leftcol->cellstart;
-
-		for (;leftcell;leftcell = leftcell->below) {
-
-			curcell = get_cell();
-
-			curcell->above = precell;
-			if (!firstcell) {
-				firstcell = curcell;
-			}
-			if (precell) {
-				precell->below = curcell;
-			}
-			curcell->right = NULL;
-			curcell->left = leftcell;
-			curcell->below = NULL;
-			leftcell->right = curcell;
-			curcell->value = value;
-
-			precell = curcell;
-		}
-
-		newcol->left = leftcol;
-		leftcol->right = newcol;
-		newcol->right = NULL;
-
-	} else if (rightcol) {
-
-		rightcell = rightcol->cellstart;
-		currowhead = mat->rowstart;
-
-		for (;rightcell;rightcell = rightcell->below) {
-			curcell = get_cell();
-			curcell->above = precell;
-			if (currowhead) {
-				currowhead->cellstart = curcell;
-				currowhead = currowhead->below;
-			}
-			if (!firstcell) {
-				firstcell = curcell;
-			}
-			if (precell) {
-				precell->below = curcell;
-			}
-			curcell->right = rightcell;
-			curcell->left = NULL;
-			curcell->below = NULL;
-			rightcell->left = curcell;
-			curcell->value = value;
-
-			precell = curcell;
-		}
-
-		mat->colstart = newcol;
-		newcol->right = rightcol;
-		rightcol->left = newcol;
-		newcol->left = NULL;
-
-	} else {
-
-		/*
-		 * if nrows is negative this loop won't break
-		 * */
-
-		for (;nrows;nrows--) {
-
-			currowhead = get_rowhead();
-			curcell = get_cell();
-
+	for (;rightcell;rightcell = rightcell->below) {
+		curcell = get_cell();
+		curcell->above = precell;
+		if (currowhead) {
 			currowhead->cellstart = curcell;
-			if (!firstrowhead) {
-				firstrowhead = currowhead;
-			}
-			currowhead->height = DEFAULT_ROW_HEIGHT;
-			currowhead->highcell = NULL;
-			currowhead->above = prerowhead;
-			if (prerowhead) {
-				prerowhead->below = currowhead;
-			}
-			currowhead->below = NULL;
-
-			curcell->above = precell;
-			if (!firstcell) {
-				firstcell = curcell;
-			}
-			if (precell) {
-				precell->below = curcell;
-			}
-			curcell->right = NULL;
-			curcell->left = NULL;
-			curcell->below = NULL;
-			curcell->value = value;
-
-			currowhead->cellstart = curcell;
-
-			precell = curcell;
-			prerowhead = currowhead;
-			mat->height += 1;
-			mat->nrows += 1;
-
+			currowhead = currowhead->below;
 		}
+		if (!firstcell) {
+			firstcell = curcell;
+		}
+		if (precell) {
+			precell->below = curcell;
+		}
+		curcell->right = rightcell;
+		curcell->left = NULL;
+		curcell->below = NULL;
+		rightcell->left = curcell;
+		curcell->value = value;
 
-		mat->colstart = newcol;
-		mat->rowstart = firstrowhead;
-		newcol->left = newcol->right = NULL;
-
+		precell = curcell;
 	}
+
+	mat->colstart = newcol;
+	newcol->right = rightcol;
+	rightcol->left = newcol;
+	newcol->left = NULL;
+
+	mat->ncols += 1;
+	newcol->cellstart = firstcell;
+	return newcol;
+
+}
+
+static struct Colm *add_col_right(struct Matrix *mat,
+		struct Colm *leftcol, int value) {
+
+	struct Cell *firstcell = NULL, *leftcell;
+	struct Cell *precell = NULL, *curcell;
+	struct Colm *newcol;
+
+	newcol = get_colhead();
+	newcol->width = DEFAULT_COL_WIDTH;
+	newcol->widecell = NULL;
+
+	leftcell = leftcol->cellstart;
+
+	for (;leftcell;leftcell = leftcell->below) {
+
+		curcell = get_cell();
+
+		curcell->above = precell;
+		if (!firstcell) {
+			firstcell = curcell;
+		}
+		if (precell) {
+			precell->below = curcell;
+		}
+		curcell->right = NULL;
+		curcell->left = leftcell;
+		curcell->below = NULL;
+		leftcell->right = curcell;
+		curcell->value = value;
+
+		precell = curcell;
+	}
+
+	newcol->left = leftcol;
+	leftcol->right = newcol;
+	newcol->right = NULL;
 
 	mat->ncols = mat->ncols + 1;
 	newcol->cellstart = firstcell;
 	return newcol;
+
+}
+
+static struct Colm *add_col_mid(struct Matrix *mat,
+		struct Colm *leftcol, struct Colm *rightcol, int value) {
+
+	struct Cell *firstcell = NULL, *leftcell, *rightcell;
+	struct Cell *precell = NULL, *curcell;
+	struct Colm *newcol;
+
+	newcol = get_colhead();
+	newcol->width = DEFAULT_COL_WIDTH;
+	newcol->widecell = NULL;
+
+	leftcell = leftcol->cellstart;
+	rightcell = rightcol->cellstart;
+
+	/* leftcell and rightcell will always have NULL or a pointer
+	 * at the same time, so we only need to check one
+	 * */
+
+	while (leftcell) {
+
+		curcell = get_cell();
+
+		curcell->above = precell;
+		if (!firstcell) {
+			firstcell = curcell;
+		}
+		if (precell) {
+			precell->below = curcell;
+		}
+		curcell->below = NULL;
+		curcell->left = leftcell;
+		curcell->right = rightcell;
+		leftcell->right = curcell;
+		rightcell->left = curcell;
+		curcell->value = value;
+
+		precell = curcell;
+		leftcell = leftcell->below;
+		rightcell = rightcell->below;
+	}
+
+	newcol->left = leftcol;
+	leftcol->right = newcol;
+	newcol->right = rightcol;
+	rightcol->left = newcol;
+
+	mat->ncols = mat->ncols + 1;
+	newcol->cellstart = firstcell;
+	return newcol;
+
+}
+
+static struct Colm *add_initial_col(struct Matrix *mat,
+		int nrows, int value) {
+
+	struct Cell *firstcell = NULL;
+	struct Cell *precell = NULL, *curcell;
+	struct Row *currowhead, *firstrowhead = NULL, *prerowhead = NULL;
+	struct Colm *newcol;
+
+	newcol = get_colhead();
+	newcol->width = DEFAULT_COL_WIDTH;
+	newcol->widecell = NULL;
+
+	/*
+	 * if nrows is negative this loop won't break
+	 * */
+
+	for (;nrows;nrows--) {
+
+		currowhead = get_rowhead();
+		curcell = get_cell();
+
+		currowhead->cellstart = curcell;
+		if (!firstrowhead) {
+			firstrowhead = currowhead;
+		}
+		currowhead->height = DEFAULT_ROW_HEIGHT;
+		currowhead->highcell = NULL;
+		currowhead->above = prerowhead;
+		if (prerowhead) {
+			prerowhead->below = currowhead;
+		}
+		currowhead->below = NULL;
+
+		curcell->above = precell;
+		if (!firstcell) {
+			firstcell = curcell;
+		}
+		if (precell) {
+			precell->below = curcell;
+		}
+		curcell->right = NULL;
+		curcell->left = NULL;
+		curcell->below = NULL;
+		curcell->value = value;
+
+		currowhead->cellstart = curcell;
+
+		precell = curcell;
+		prerowhead = currowhead;
+		mat->height += 1;
+		mat->nrows += 1;
+
+	}
+
+	mat->colstart = newcol;
+	mat->rowstart = firstrowhead;
+	newcol->left = newcol->right = NULL;
+
+	mat->ncols = mat->ncols + 1;
+	newcol->cellstart = firstcell;
+	return newcol;
+
+}
+
+struct Colm *matrix_add_col(struct Matrix *mat,
+		struct Colm *leftcol, struct Colm *rightcol, int nrows, int value) {
+
+	if (!mat)
+		return NULL;
+
+	if (leftcol && rightcol) {
+		return add_col_mid(mat, leftcol, rightcol, value);
+	} else if (leftcol) {
+		return add_col_right(mat, rightcol, value);
+	} else if (rightcol) {
+		return add_col_left(mat, leftcol, value);
+	} else {
+		return add_initial_col(mat, nrows, value);
+	}
 
 }
 
@@ -489,167 +565,226 @@ void matrix_dispose_row(struct Matrix *mat, struct Row *rowtod) {
 
 }
 
-struct Row *matrix_add_row(struct Matrix *mat,
-		struct Row *rowabove, struct Row *rowbelow, int ncols, int value) {
-	/* */
-	struct Cell *firstcell = NULL, *cellabove, *cellbelow;
-	struct Cell *precell = NULL, *curcell;
-	struct Colm *curcolhead, *firstcolhead = NULL, *precolhead = NULL;
-	struct Row *newrow;
+static struct Row *add_row_bot(struct Matrix *mat,
+		struct Row *rowabove, int value) {
 
-	if (!mat)
-		return NULL;
+	struct Cell *firstcell = NULL, *cellabove;
+	struct Cell *precell = NULL, *curcell;
+	struct Row *newrow;
 
 	newrow = get_rowhead();
 	newrow->height = DEFAULT_ROW_HEIGHT;
 	newrow->highcell = NULL;
 
-	if (rowabove && rowbelow) {
+	cellabove = rowabove->cellstart;
 
-		cellabove = rowabove->cellstart;
-		cellbelow = rowbelow->cellstart;
-
-		/* cellabove and cellbelow will always have NULL or a pointer
-		 * at the same time, so we only need to check one
-		 * */
-
-		for (;cellabove;) {
-			curcell = get_cell();
-			curcell->left = precell;
-			if (!firstcell) {
-				firstcell = curcell;
-			}
-			if (precell) {
-				precell->right = curcell;
-			}
-			curcell->right = NULL;
-			curcell->below = cellbelow;
-			curcell->above = cellabove;
-			cellabove->below = curcell;
-			cellbelow->above = curcell;
-			curcell->value = value;
-
-			precell = curcell;
-			cellabove = cellabove->right;
-			cellbelow = cellbelow->right;
+	for (;cellabove;cellabove = cellabove->right) {
+		curcell = get_cell();
+		curcell->left = precell;
+		if (!firstcell) {
+			firstcell = curcell;
 		}
-
-
-		newrow->above = rowabove;
-		rowabove->below = newrow;
-		newrow->below = rowbelow;
-		rowbelow->above = newrow;
-
-	} else if (rowabove) {
-
-		cellabove = rowabove->cellstart;
-
-		for (;cellabove;cellabove = cellabove->right) {
-			curcell = get_cell();
-			curcell->left = precell;
-			if (!firstcell) {
-				firstcell = curcell;
-			}
-			if (precell) {
-				precell->right = curcell;
-			}
-			curcell->right = NULL;
-			curcell->below = NULL;
-			curcell->above = cellabove;
-			cellabove->below = curcell;
-			curcell->value = value;
-
-			precell = curcell;
+		if (precell) {
+			precell->right = curcell;
 		}
+		curcell->right = NULL;
+		curcell->below = NULL;
+		curcell->above = cellabove;
+		cellabove->below = curcell;
+		curcell->value = value;
 
-		newrow->above = rowabove;
-		rowabove->below = newrow;
-		newrow->below = NULL;
-
-	} else if (rowbelow) {
-
-		cellbelow = rowbelow->cellstart;
-		curcolhead = mat->colstart;
-
-		for (;cellbelow;cellbelow = cellbelow->right) {
-			curcell = get_cell();
-			curcell->left = precell;
-			if (curcolhead) {
-				curcolhead->cellstart = curcell;
-				curcolhead = curcolhead->right;
-			}
-			if (!firstcell) {
-				firstcell = curcell;
-			}
-			if (precell) {
-				precell->right = curcell;
-			}
-			curcell->right = NULL;
-			curcell->above = NULL;
-			curcell->below = cellbelow;
-			cellbelow->above = curcell;
-			curcell->value = value;
-
-			precell = curcell;
-		}
-
-		mat->rowstart = newrow;
-		newrow->below = rowbelow;
-		rowbelow->above = newrow;
-		newrow->above = NULL;
-
-	} else {
-
-		/*
-		 * if ncols is negative this loop won't break
-		 * */
-
-		for (;ncols;ncols--) {
-
-			curcolhead = get_colhead();
-			curcell = get_cell();
-
-			curcolhead->cellstart = curcell;
-			if (!firstcolhead) {
-				firstcolhead = curcolhead;
-			}
-			curcolhead->width = DEFAULT_COL_WIDTH;
-			curcolhead->widecell = NULL;
-			curcolhead->left = precolhead;
-			if (precolhead) {
-				precolhead->right = curcolhead;
-			}
-			curcolhead->right = NULL;
-
-			curcell->left = precell;
-			if (!firstcell) {
-				firstcell = curcell;
-			}
-			if (precell) {
-				precell->right = curcell;
-			}
-			curcell->right = NULL;
-			curcell->above = NULL;
-			curcell->below = NULL;
-			curcell->value = value;
-
-			curcolhead->cellstart = curcell;
-
-			precell = curcell;
-			precolhead = curcolhead;
-			mat->width += 1;
-			mat->ncols += 1;
-		}
-
-		mat->rowstart = newrow;
-		mat->colstart = firstcolhead;
-		newrow->above = newrow->below = NULL;
-
+		precell = curcell;
 	}
 
-	mat->nrows = mat->nrows + 1;
+	newrow->above = rowabove;
+	rowabove->below = newrow;
+	newrow->below = NULL;
+
+	mat->nrows += 1;
 	newrow->cellstart = firstcell;
 	return newrow;
+
+}
+
+static struct Row *add_row_top(struct Matrix *mat,
+		struct Row *rowbelow, int value) {
+
+	struct Cell *firstcell = NULL, *cellbelow;
+	struct Cell *precell = NULL, *curcell;
+	struct Colm *curcolhead;
+	struct Row *newrow;
+
+	newrow = get_rowhead();
+	newrow->height = DEFAULT_ROW_HEIGHT;
+	newrow->highcell = NULL;
+
+	cellbelow = rowbelow->cellstart;
+	curcolhead = mat->colstart;
+
+	for (;cellbelow;cellbelow = cellbelow->right) {
+		curcell = get_cell();
+		curcell->left = precell;
+		if (curcolhead) {
+			curcolhead->cellstart = curcell;
+			curcolhead = curcolhead->right;
+		}
+		if (!firstcell) {
+			firstcell = curcell;
+		}
+		if (precell) {
+			precell->right = curcell;
+		}
+		curcell->right = NULL;
+		curcell->above = NULL;
+		curcell->below = cellbelow;
+		cellbelow->above = curcell;
+		curcell->value = value;
+
+		precell = curcell;
+	}
+
+	mat->rowstart = newrow;
+	newrow->below = rowbelow;
+	rowbelow->above = newrow;
+	newrow->above = NULL;
+
+	mat->nrows += 1;
+	newrow->cellstart = firstcell;
+	return newrow;
+
+}
+
+static struct Row *add_row_mid(struct Matrix *mat,
+		struct Row *rowabove, struct Row *rowbelow, int value) {
+
+	struct Cell *firstcell = NULL, *cellabove, *cellbelow;
+	struct Cell *precell = NULL, *curcell;
+	struct Row *newrow;
+
+	newrow = get_rowhead();
+	newrow->height = DEFAULT_ROW_HEIGHT;
+	newrow->highcell = NULL;
+
+	cellabove = rowabove->cellstart;
+	cellbelow = rowbelow->cellstart;
+
+	/* cellabove and cellbelow will always have NULL or a pointer
+	 * at the same time, so we only need to check one
+	 * */
+
+	while (cellabove) {
+		curcell = get_cell();
+		curcell->left = precell;
+		if (!firstcell) {
+			firstcell = curcell;
+		}
+		if (precell) {
+			precell->right = curcell;
+		}
+		curcell->right = NULL;
+		curcell->below = cellbelow;
+		curcell->above = cellabove;
+		cellabove->below = curcell;
+		cellbelow->above = curcell;
+		curcell->value = value;
+
+		precell = curcell;
+		cellabove = cellabove->right;
+		cellbelow = cellbelow->right;
+	}
+
+	newrow->above = rowabove;
+	rowabove->below = newrow;
+	newrow->below = rowbelow;
+	rowbelow->above = newrow;
+
+	mat->nrows += 1;
+	newrow->cellstart = firstcell;
+	return newrow;
+
+}
+
+static struct Row *add_initial_row(struct Matrix *mat,
+		int ncols, int value) {
+
+	struct Cell *firstcell = NULL;
+	struct Cell *precell = NULL, *curcell;
+	struct Colm *curcolhead, *firstcolhead = NULL, *precolhead = NULL;
+	struct Row *newrow;
+
+	newrow = get_rowhead();
+	newrow->height = DEFAULT_ROW_HEIGHT;
+	newrow->highcell = NULL;
+
+	/*
+	 * if ncols is negative this loop won't break
+	 * */
+
+	for (;ncols;ncols--) {
+
+		curcolhead = get_colhead();
+		curcell = get_cell();
+
+		curcolhead->cellstart = curcell;
+		if (!firstcolhead) {
+			firstcolhead = curcolhead;
+		}
+		curcolhead->width = DEFAULT_COL_WIDTH;
+		curcolhead->widecell = NULL;
+		curcolhead->left = precolhead;
+		if (precolhead) {
+			precolhead->right = curcolhead;
+		}
+		curcolhead->right = NULL;
+
+		curcell->left = precell;
+		if (!firstcell) {
+			firstcell = curcell;
+		}
+		if (precell) {
+			precell->right = curcell;
+		}
+		curcell->right = NULL;
+		curcell->above = NULL;
+		curcell->below = NULL;
+		curcell->value = value;
+
+		curcolhead->cellstart = curcell;
+
+		precell = curcell;
+		precolhead = curcolhead;
+		mat->width += 1;
+		mat->ncols += 1;
+	}
+
+	mat->rowstart = newrow;
+	mat->colstart = firstcolhead;
+	newrow->above = newrow->below = NULL;
+
+	mat->nrows += 1;
+	newrow->cellstart = firstcell;
+	return newrow;
+
+}
+
+struct Row *matrix_add_row(struct Matrix *mat,
+		struct Row *rowabove, struct Row *rowbelow, int ncols, int value) {
+
+	if (!mat) {
+		smm_log(WARN, "matrix_add_row was called with NULL mat");
+		return NULL;
+	}
+
+	if (rowabove && rowbelow) {
+		return add_row_mid(mat, rowabove, rowbelow, value);
+	} else if (rowabove) {
+		return add_row_bot(mat, rowabove, value);
+	} else if (rowbelow) {
+		return add_row_top(mat, rowbelow, value);
+	} else {
+		return add_initial_row(mat, ncols, value);
+	}
+
 }
 
 struct Matrix *matrix_multiply(const struct Matrix *leftmat,
@@ -691,7 +826,6 @@ struct Matrix *matrix_multiply(const struct Matrix *leftmat,
 				lmatcell = lmatcell->right;
 				rmatcell = rmatcell->below;
 			}
-
 
 			rmatcol = rmatcol->right;
 			rescell = rescell->right;
