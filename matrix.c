@@ -27,6 +27,12 @@ static struct Colm *add_col_mid(struct Matrix *mat,
 static struct Colm *add_initial_col(struct Matrix *mat,
 		int nrows, int value);
 
+static void dispose_col_left(struct Row *currow, struct Colm *coltod);
+static void dispose_col_right(struct Colm *leftcol, struct Colm *coltod);
+static void dispose_col_mid(struct Colm *leftcol,
+		struct Colm *rightcol, struct Colm *coltod);
+static void dispose_last_col(struct Matrix *mat, struct Colm *coltod);
+
 // guess ill go to mars;
 
 
@@ -390,93 +396,147 @@ struct Colm *matrix_add_col(struct Matrix *mat,
 	if (leftcol && rightcol) {
 		return add_col_mid(mat, leftcol, rightcol, value);
 	} else if (leftcol) {
-		return add_col_right(mat, rightcol, value);
+		return add_col_right(mat, leftcol, value);
 	} else if (rightcol) {
-		return add_col_left(mat, leftcol, value);
+		return add_col_left(mat, rightcol, value);
 	} else {
 		return add_initial_col(mat, nrows, value);
 	}
 
 }
 
+static void dispose_col_left(struct Row *currow, struct Colm *coltod) {
+
+	struct Cell *curcell, *rightcell;
+
+	/*
+	 * its easy to loop through the rows than through cols,
+	 * so we don't need rightcol
+	 * */
+
+	while (currow) {
+
+		curcell = currow->cellstart;
+		rightcell = curcell->right;
+		currow->cellstart = rightcell;
+		rightcell->left = NULL;
+		currow = currow->below;
+		dispose_cell(curcell);
+
+	}
+
+	free(coltod);
+
+}
+
+static void dispose_col_right(struct Colm *leftcol, struct Colm *coltod) {
+
+	struct Cell *curcell, *precell, *leftcell;
+
+	leftcell = leftcol->cellstart;
+	curcell = coltod->cellstart;
+
+	while (curcell) {
+
+		precell = curcell;
+		leftcell->right = NULL;
+		leftcell = leftcell->below;
+		curcell = curcell->below;
+		dispose_cell(precell);
+
+	}
+
+	leftcol->right = NULL;
+	free(coltod);
+
+}
+
+static void dispose_col_mid(struct Colm *leftcol,
+		struct Colm *rightcol, struct Colm *coltod) {
+
+	struct Cell *curcell, *precell, *leftcell, *rightcell;
+
+	leftcell = leftcol->cellstart;
+	rightcell = rightcol->cellstart;
+	curcell = coltod->cellstart;
+
+	while (curcell) {
+
+		leftcell->right = rightcell;
+		rightcell->left = leftcell;
+
+		precell = curcell;
+		leftcell = leftcell->below;
+		rightcell = rightcell->below;
+		curcell = curcell->below;
+
+		dispose_cell(precell);
+	}
+
+	leftcol->right = rightcol;
+	rightcol->left = leftcol;
+
+	free(coltod);
+
+}
+
+static void dispose_last_col(struct Matrix *mat, struct Colm *coltod) {
+
+	struct Cell *curcell;
+	struct Row *currow, *prerow;
+
+	currow = mat->rowstart;
+
+	while (currow) {
+
+		prerow = currow;
+		curcell = currow->cellstart;
+		currow = currow->below;
+		dispose_cell(curcell);
+		free(prerow);
+
+	}
+
+	free(coltod);
+
+	mat->rowstart = NULL;
+	mat->colstart = NULL;
+
+}
+
+
 void matrix_dispose_col(struct Matrix *mat, struct Colm *coltod) {
 
 	struct Colm *leftcol, *rightcol;
-	struct Cell *curcell, *precell, *leftcell, *rightcell;
-	struct Row *currow, *prerow;
 
 	if (!coltod) {
 		smm_log(WARN, "dispose_col was called with a NULL coltod");
 		return;
 	}
 
+	/*
+	 * always move the curcol from the coltod before calling to dispose it
+	 * ie, call matrix_mvcc* before disposing it
+	 * */
+
+	if (coltod == mat->curcol) {
+		smm_log(WARN, "matrix_dispose_col was called with mat->curcol as coltod");
+		return;
+	}
+
+
 	leftcol = coltod->left;
 	rightcol = coltod->right;
 
 	if (leftcol && rightcol) {
-
-		leftcell = leftcol->cellstart;
-		rightcell = rightcol->cellstart;
-
-		for (curcell = coltod->cellstart;curcell;) {
-			leftcell->right = rightcell;
-			rightcell->left = leftcell;
-
-			precell = curcell;
-			leftcell = leftcell->below;
-			rightcell = rightcell->below;
-			curcell = curcell->below;
-
-			dispose_cell(precell);
-		}
-		leftcol->right = rightcol;
-		rightcol->left = leftcol;
-
-		free(coltod);
-
+		dispose_col_mid(leftcol, rightcol, coltod);
 	} else if (leftcol) {
-
-		leftcell = leftcol->cellstart;
-
-		for (curcell=coltod->cellstart;curcell;) {
-			precell = curcell;
-			leftcell->right = NULL;
-			leftcell = leftcell->below;
-			curcell = curcell->below;
-			dispose_cell(precell);
-		}
-
-		leftcol->right = NULL;
-		free(coltod);
-
+		dispose_col_right(leftcol, coltod);
 	} else if (rightcol) {
-
-		for (currow=mat->rowstart;currow;) {
-			curcell = currow->cellstart;
-			rightcell = curcell->right;
-			currow->cellstart = rightcell;
-			rightcell->left = NULL;
-			currow = currow->below;
-			dispose_cell(curcell);
-		}
-
 		mat->colstart = coltod->right;
-		free(coltod);
-
+		dispose_col_left(mat->rowstart, coltod);
 	} else {
-
-		for (currow=mat->rowstart;currow;) {
-			prerow = currow;
-			curcell = currow->cellstart;
-			currow = currow->below;
-			dispose_cell(curcell);
-			free(prerow);
-		}
-
-		free(coltod);
-		mat->rowstart = NULL;
-		mat->colstart = NULL;
-
+		dispose_last_col(mat, coltod);
 	}
 
 	mat->ncols = mat->ncols - 1;
