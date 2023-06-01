@@ -33,6 +33,13 @@ static void dispose_col_mid(struct Colm *leftcol,
 		struct Colm *rightcol, struct Colm *coltod);
 static void dispose_last_col(struct Matrix *mat, struct Colm *coltod);
 
+static void dispose_row_above(struct Colm *colstart, struct Row *rowtod);
+static void dispose_row_below(struct Row *rowabove, struct Row *rowtod);
+static void dispose_row_mid(struct Row *rowabove,
+		struct Row *rowbelow, struct Row *rowtod);
+static void dispose_last_row(struct Matrix *mat, struct Row *rowtod);
+
+
 // guess ill go to mars;
 
 
@@ -510,7 +517,7 @@ void matrix_dispose_col(struct Matrix *mat, struct Colm *coltod) {
 	struct Colm *leftcol, *rightcol;
 
 	if (!coltod) {
-		smm_log(WARN, "dispose_col was called with a NULL coltod");
+		smm_log(WARN, "matrix_dispose_col was called with a NULL coltod");
 		return;
 	}
 
@@ -539,18 +546,122 @@ void matrix_dispose_col(struct Matrix *mat, struct Colm *coltod) {
 		dispose_last_col(mat, coltod);
 	}
 
-	mat->ncols = mat->ncols - 1;
+	mat->ncols -= 1;
 
 }
+
+static void dispose_row_above(struct Colm *curcol, struct Row *rowtod) {
+
+	struct Cell *curcell, *cellbelow;
+
+	while (curcol) {
+
+		curcell = curcol->cellstart;
+		cellbelow = curcell->below;
+		curcol->cellstart = cellbelow;
+		cellbelow->above = NULL;
+		curcol = curcol->right;
+		dispose_cell(curcell);
+
+	}
+
+	free(rowtod);
+
+}
+
+static void dispose_row_below(struct Row *rowabove, struct Row *rowtod) {
+
+	struct Cell *curcell, *precell, *cellabove;
+
+	cellabove = rowabove->cellstart;
+	curcell=rowtod->cellstart;
+
+	while (curcell) {
+
+		precell = curcell;
+		cellabove->below = NULL;
+		cellabove = cellabove->right;
+		curcell = curcell->right;
+		dispose_cell(precell);
+
+	}
+
+	rowabove->below = NULL;
+	free(rowtod);
+
+}
+
+static void dispose_row_mid(struct Row *rowabove,
+		struct Row *rowbelow, struct Row *rowtod) {
+
+	struct Cell *curcell, *precell, *cellabove, *cellbelow;
+
+	cellabove = rowabove->cellstart;
+	cellbelow = rowbelow->cellstart;
+	curcell = rowtod->cellstart;
+
+	while (curcell) {
+
+		cellabove->below = cellbelow;
+		cellbelow->above = cellabove;
+
+		precell = curcell;
+		cellabove = cellabove->right;
+		cellbelow = cellbelow->right;
+		curcell = curcell->right;
+
+		dispose_cell(precell);
+
+	}
+
+	rowabove->below = rowbelow;
+	rowbelow->above = rowabove;
+
+	free(rowtod);
+
+}
+
+static void dispose_last_row(struct Matrix *mat, struct Row *rowtod) {
+
+	struct Cell *curcell;
+	struct Colm *curcol, *precol;
+
+	curcol=mat->colstart;
+
+	while (curcol) {
+
+		precol = curcol;
+		curcell = curcol->cellstart;
+		curcol = curcol->right;
+		dispose_cell(curcell);
+		free(precol);
+
+	}
+
+	free(rowtod);
+
+	mat->rowstart = NULL;
+	mat->colstart = NULL;
+
+}
+
 
 void matrix_dispose_row(struct Matrix *mat, struct Row *rowtod) {
 
 	struct Row *rowbelow, *rowabove;
-	struct Cell *curcell, *precell, *cellabove, *cellbelow;
-	struct Colm *curcol, *precol;
 
 	if (!rowtod) {
-		smm_log(WARN, "dispose_row was called with a NULL rowtod");
+		smm_log(WARN, "matrix_dispose_row was called with a NULL rowtod");
+		return;
+	}
+
+	/*
+	 * always move the currow from the rowtod before calling to dispose it
+	 * ie, call matrix_mvcc* before disposing it
+	 * */
+
+	if (rowtod == mat->currow) {
+		smm_log(WARN, "matrix_dispose_row was called with mat->currow as rowtod");
 		return;
 	}
 
@@ -558,71 +669,17 @@ void matrix_dispose_row(struct Matrix *mat, struct Row *rowtod) {
 	rowbelow = rowtod->below;
 
 	if (rowabove && rowbelow) {
-
-		cellabove = rowabove->cellstart;
-		cellbelow = rowbelow->cellstart;
-
-		for (curcell = rowtod->cellstart;curcell;) {
-			cellabove->below = cellbelow;
-			cellbelow->above = cellabove;
-
-			precell = curcell;
-			cellabove = cellabove->right;
-			cellbelow = cellbelow->right;
-			curcell = curcell->right;
-
-			dispose_cell(precell);
-		}
-		rowabove->below = rowbelow;
-		rowbelow->above = rowabove;
-
-		free(rowtod);
-
+		dispose_row_mid(rowabove, rowbelow, rowtod);
 	} else if (rowabove) {
-
-		cellabove = rowabove->cellstart;
-
-		for (curcell=rowtod->cellstart;curcell;) {
-			precell = curcell;
-			cellabove->below = NULL;
-			cellabove = cellabove->right;
-			curcell = curcell->right;
-			dispose_cell(precell);
-		}
-
-		rowabove->below = NULL;
-		free(rowtod);
-
+		dispose_row_below(rowabove, rowtod);
 	} else if (rowbelow) {
-
-		for (curcol=mat->colstart;curcol;) {
-			curcell = curcol->cellstart;
-			cellbelow = curcell->below;
-			curcol->cellstart = cellbelow;
-			cellbelow->above = NULL;
-			curcol = curcol->right;
-			dispose_cell(curcell);
-		}
-
 		mat->rowstart = rowtod->below;
-		free(rowtod);
-
+		dispose_row_above(mat->colstart, rowtod);
 	} else {
-
-		for (curcol=mat->colstart;curcol;) {
-			precol = curcol;
-			curcell = curcol->cellstart;
-			curcol = curcol->right;
-			dispose_cell(curcell);
-			free(precol);
-		}
-
-		free(rowtod);
-		mat->rowstart = NULL;
-		mat->colstart = NULL;
-
+		dispose_last_row(mat, rowtod);
 	}
 
+	mat->nrows -= 1;
 }
 
 static struct Row *add_row_bot(struct Matrix *mat,
