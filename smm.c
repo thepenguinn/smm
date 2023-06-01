@@ -125,10 +125,10 @@ static void normal_mode(void) {
 			case 'n':
 
 				if (curmat) {
-					attach_matrix(matrix_create(3, 3, 0), curmat, curmat->right);
+					attach_matrix(matrix_create(3, 3, 256), curmat, curmat->right);
 					curmat = curmat->right;
 				} else {
-					attach_matrix(matrix_create(3, 3, 0), curmat, NULL);
+					attach_matrix(matrix_create(3, 3, 256), curmat, NULL);
 					curmat = mhead;
 				}
 
