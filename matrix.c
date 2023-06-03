@@ -27,15 +27,15 @@ static struct Colm *add_col_mid(struct Matrix *mat,
 static struct Colm *add_initial_col(struct Matrix *mat,
 		int nrows, int value);
 
-static void dispose_col_left(struct Row *currow, struct Colm *coltod);
-static void dispose_col_right(struct Colm *leftcol, struct Colm *coltod);
-static void dispose_col_mid(struct Colm *leftcol,
+static void dispose_left_col(struct Row *currow, struct Colm *coltod);
+static void dispose_right_col(struct Colm *leftcol, struct Colm *coltod);
+static void dispose_mid_col(struct Colm *leftcol,
 		struct Colm *rightcol, struct Colm *coltod);
 static void dispose_last_col(struct Matrix *mat, struct Colm *coltod);
 
-static void dispose_row_above(struct Colm *colstart, struct Row *rowtod);
-static void dispose_row_below(struct Row *rowabove, struct Row *rowtod);
-static void dispose_row_mid(struct Row *rowabove,
+static void dispose_top_row(struct Colm *colstart, struct Row *rowtod);
+static void dispose_bot_row(struct Row *rowabove, struct Row *rowtod);
+static void dispose_mid_row(struct Row *rowabove,
 		struct Row *rowbelow, struct Row *rowtod);
 static void dispose_last_row(struct Matrix *mat, struct Row *rowtod);
 
@@ -110,7 +110,6 @@ void matrix_mvcc_below(struct Matrix *mat) {
 		mat->curcellycord = newy;
 
 	}
-
 
 }
 
@@ -412,7 +411,7 @@ struct Colm *matrix_add_col(struct Matrix *mat,
 
 }
 
-static void dispose_col_left(struct Row *currow, struct Colm *coltod) {
+static void dispose_left_col(struct Row *currow, struct Colm *coltod) {
 
 	struct Cell *curcell, *rightcell;
 
@@ -436,7 +435,7 @@ static void dispose_col_left(struct Row *currow, struct Colm *coltod) {
 
 }
 
-static void dispose_col_right(struct Colm *leftcol, struct Colm *coltod) {
+static void dispose_right_col(struct Colm *leftcol, struct Colm *coltod) {
 
 	struct Cell *curcell, *precell, *leftcell;
 
@@ -458,7 +457,7 @@ static void dispose_col_right(struct Colm *leftcol, struct Colm *coltod) {
 
 }
 
-static void dispose_col_mid(struct Colm *leftcol,
+static void dispose_mid_col(struct Colm *leftcol,
 		struct Colm *rightcol, struct Colm *coltod) {
 
 	struct Cell *curcell, *precell, *leftcell, *rightcell;
@@ -536,12 +535,12 @@ void matrix_dispose_col(struct Matrix *mat, struct Colm *coltod) {
 	rightcol = coltod->right;
 
 	if (leftcol && rightcol) {
-		dispose_col_mid(leftcol, rightcol, coltod);
+		dispose_mid_col(leftcol, rightcol, coltod);
 	} else if (leftcol) {
-		dispose_col_right(leftcol, coltod);
+		dispose_right_col(leftcol, coltod);
 	} else if (rightcol) {
 		mat->colstart = coltod->right;
-		dispose_col_left(mat->rowstart, coltod);
+		dispose_left_col(mat->rowstart, coltod);
 	} else {
 		dispose_last_col(mat, coltod);
 	}
@@ -550,7 +549,7 @@ void matrix_dispose_col(struct Matrix *mat, struct Colm *coltod) {
 
 }
 
-static void dispose_row_above(struct Colm *curcol, struct Row *rowtod) {
+static void dispose_top_row(struct Colm *curcol, struct Row *rowtod) {
 
 	struct Cell *curcell, *cellbelow;
 
@@ -569,7 +568,7 @@ static void dispose_row_above(struct Colm *curcol, struct Row *rowtod) {
 
 }
 
-static void dispose_row_below(struct Row *rowabove, struct Row *rowtod) {
+static void dispose_bot_row(struct Row *rowabove, struct Row *rowtod) {
 
 	struct Cell *curcell, *precell, *cellabove;
 
@@ -591,7 +590,7 @@ static void dispose_row_below(struct Row *rowabove, struct Row *rowtod) {
 
 }
 
-static void dispose_row_mid(struct Row *rowabove,
+static void dispose_mid_row(struct Row *rowabove,
 		struct Row *rowbelow, struct Row *rowtod) {
 
 	struct Cell *curcell, *precell, *cellabove, *cellbelow;
@@ -626,7 +625,7 @@ static void dispose_last_row(struct Matrix *mat, struct Row *rowtod) {
 	struct Cell *curcell;
 	struct Colm *curcol, *precol;
 
-	curcol=mat->colstart;
+	curcol = mat->colstart;
 
 	while (curcol) {
 
@@ -669,12 +668,12 @@ void matrix_dispose_row(struct Matrix *mat, struct Row *rowtod) {
 	rowbelow = rowtod->below;
 
 	if (rowabove && rowbelow) {
-		dispose_row_mid(rowabove, rowbelow, rowtod);
+		dispose_mid_row(rowabove, rowbelow, rowtod);
 	} else if (rowabove) {
-		dispose_row_below(rowabove, rowtod);
+		dispose_bot_row(rowabove, rowtod);
 	} else if (rowbelow) {
 		mat->rowstart = rowtod->below;
-		dispose_row_above(mat->colstart, rowtod);
+		dispose_top_row(mat->colstart, rowtod);
 	} else {
 		dispose_last_row(mat, rowtod);
 	}
@@ -957,6 +956,48 @@ struct Matrix *matrix_multiply(const struct Matrix *leftmat,
 
 }
 
+void matrix_dispose(struct Matrix *mat) {
+
+	struct Row *rowtod;
+	struct Cell *curcell, *precell;
+
+	if (!mat) {
+		smm_log(WARN,"matrix_dispose was called with a NULL mat");
+		return;
+	}
+
+	/*
+	 * make sure to detach the matrix form matrix list before the
+	 * call to matrix_dispose
+	 * */
+
+	if (mat->left || mat->right) {
+		smm_log(WARN, "seems like matrix_dispose was called with a non-detached mat");
+	}
+
+	rowtod = mat->rowstart->below;
+
+	dispose_last_row(mat, mat->rowstart);
+
+	while (rowtod) {
+
+		curcell=rowtod->cellstart;
+
+		while (curcell) {
+
+			precell = curcell;
+			curcell = curcell->right;
+			dispose_cell(precell);
+
+		}
+
+		free(rowtod);
+
+	}
+
+	free(mat);
+
+}
 
 struct Matrix *matrix_create(int nrows, int ncols, int value) {
 

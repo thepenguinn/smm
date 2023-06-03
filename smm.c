@@ -10,12 +10,16 @@
 
 // static int main_window_content = MAIN_MENU;
 
-static struct Matrix *mhead = NULL;
-static struct Matrix *mtail = NULL;
+static struct Matrix *Mhead = NULL;
+static struct Matrix *Mtail = NULL;
 
 static void create_windows(void);
 static void normal_mode(void);
 static void resize_windows(void);
+static void attach_matrix(struct Matrix *mattoattach,
+		struct Matrix *leftmat, struct Matrix *rightmat);
+static void detach_matrix(struct Matrix *mattodetach);
+
 
 /*
  * need this one to change cursor shape *
@@ -23,7 +27,8 @@ static void resize_windows(void);
  * fflush(stdout);
  * */
 
-static void attach_matrix(struct Matrix *mattoattach, struct Matrix *leftmat, struct Matrix *rightmat) {
+static void attach_matrix(struct Matrix *mattoattach,
+		struct Matrix *leftmat, struct Matrix *rightmat) {
 
 	if (!mattoattach) {
 		smm_log(WARN, "attach_matrix was called with a NULL mattoattach");
@@ -32,22 +37,44 @@ static void attach_matrix(struct Matrix *mattoattach, struct Matrix *leftmat, st
 
 	if (leftmat)
 		leftmat->right = mattoattach;
-	else {
-		mhead = mattoattach;
-		smm_log(DEBUG, "mhead changed to mattoattach");
-	}
+	else
+		Mhead = mattoattach;
 
 	if (rightmat)
 		rightmat->left = mattoattach;
-	else {
-		mtail = mattoattach;
-		smm_log(DEBUG, "mtail changed to mattoattach");
-	}
+	else
+		Mtail = mattoattach;
 
 	mattoattach->left = leftmat;
 	mattoattach->right = rightmat;
 
 }
+
+static void detach_matrix(struct Matrix *mattodetach) {
+
+	if (!mat) {
+		smm_log(WARN, "detach_matrix was called with a NULL mattodetach");
+		return;
+	}
+
+	if (mat->left)
+		mat->left->right = mat->right;
+	else
+		Mhead = mat->right;
+
+	if (mat->right)
+		mat->right->left = mat->left;
+	else
+		Mtail = mat->left;
+
+	/*
+	 * This is for matrix_dispose
+	 * */
+
+	mat->left = mat->right = NULL;
+
+}
+
 
 static void normal_mode(void) {
 
@@ -59,7 +86,7 @@ static void normal_mode(void) {
 
 	draw_topwin(topwin);
 
-	mhead = mtail = curmat = matrix_create(3, 3, 1);
+	Mhead = Mtail = curmat = matrix_create(3, 3, 1);
 	curcol = curmat->curcol;
 	currow = curmat->currow;
 	//   curcell = curmat->curcell;
@@ -69,7 +96,7 @@ static void normal_mode(void) {
 		curmat = curmat->right;
 	} else {
 		attach_matrix(matrix_create(3, 3, 1), curmat, NULL);
-		curmat = mhead;
+		curmat = Mhead;
 	}
 
 	curmat = curmat->left;
@@ -129,7 +156,7 @@ static void normal_mode(void) {
 					curmat = curmat->right;
 				} else {
 					attach_matrix(matrix_create(3, 3, 256), curmat, NULL);
-					curmat = mhead;
+					curmat = Mhead;
 				}
 
 				curcol = curmat->curcol;

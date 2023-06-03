@@ -56,6 +56,7 @@ struct Matrix {
 	struct Matrix *right;
 };
 
+void matrix_dispose(struct Matrix *mat);
 void matrix_dispose_row(struct Matrix *mat, struct Row *currow);
 void matrix_dispose_col(struct Matrix *mat, struct Colm *curcol);
 void matrix_mvcc_left(struct Matrix *mat);
