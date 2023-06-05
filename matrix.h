@@ -9,6 +9,7 @@ struct Cell;
 struct Colm;
 struct Row;
 struct Matrix;
+struct Stashed;
 
 struct Cell {
 	long value;
@@ -54,6 +55,18 @@ struct Matrix {
 	struct Colm *curcol;
 	struct Matrix *left;
 	struct Matrix *right;
+
+	int selected;
+	char name[128];
+
+};
+
+struct Stashed {
+
+	struct Stashed *left;
+	struct Stashed *right;
+	struct Matrix *loadedmat;
+
 };
 
 void matrix_dispose(struct Matrix *mat);

@@ -1026,6 +1026,9 @@ struct Matrix *matrix_create(int nrows, int ncols, int value) {
 		mat->curcellxcord = mat->curcellycord = 0;
 		mat->xmax = mat->ymax = 0;
 
+		mat->selected = 0;
+		sprintf(mat->name, "Matrix");
+
 	} else {
 		exit(EXIT_FAILURE);
 	}

@@ -52,26 +52,26 @@ static void attach_matrix(struct Matrix *mattoattach,
 
 static void detach_matrix(struct Matrix *mattodetach) {
 
-	if (!mat) {
+	if (!mattodetach) {
 		smm_log(WARN, "detach_matrix was called with a NULL mattodetach");
 		return;
 	}
 
-	if (mat->left)
-		mat->left->right = mat->right;
+	if (mattodetach->left)
+		mattodetach->left->right = mattodetach->right;
 	else
-		Mhead = mat->right;
+		Mhead = mattodetach->right;
 
-	if (mat->right)
-		mat->right->left = mat->left;
+	if (mattodetach->right)
+		mattodetach->right->left = mattodetach->left;
 	else
-		Mtail = mat->left;
+		Mtail = mattodetach->left;
 
 	/*
 	 * This is for matrix_dispose
 	 * */
 
-	mat->left = mat->right = NULL;
+	mattodetach->left = mattodetach->right = NULL;
 
 }
 
@@ -80,41 +80,47 @@ static void normal_mode(void) {
 
 	int event;
 	struct Matrix *curmat = NULL;
-	struct Colm *curcol = NULL;
-	struct Row *currow = NULL;
-	//   struct Cell *curcell = NULL;
+	struct Menu mainmenu;
+	int i;
+
 
 	draw_topwin(topwin);
 
-	Mhead = Mtail = curmat = matrix_create(3, 3, 1);
-	curcol = curmat->curcol;
-	currow = curmat->currow;
-	//   curcell = curmat->curcell;
+	mainmenu.ymax = 0;
+	mainmenu.cury = 0;
+	mainmenu.totalitems = 0;
+	mainmenu.curitemidx = 0;
+	mainmenu.curmat = NULL;
 
-	if (curmat) {
-		attach_matrix(matrix_create(3, 3, 1), curmat, curmat->right);
-		curmat = curmat->right;
-	} else {
-		attach_matrix(matrix_create(3, 3, 1), curmat, NULL);
-		curmat = Mhead;
+	Mhead = Mtail = curmat = matrix_create(3, 3, 256);
+	mainmenu.curmat = curmat;
+	mainmenu.totalitems += 1;
+
+	for (i = 0;i < 10; i++) {
+		attach_matrix(matrix_create(3, 3, i), Mtail, NULL);
+		mainmenu.totalitems += 1;
 	}
-
-	curmat = curmat->left;
-	attach_matrix(matrix_multiply(curmat, curmat->right), curmat, curmat->right);
-
-	curmat = curmat->right;
-	curcol = curmat->curcol;
-	currow = curmat->currow;
-	//   curcell = curmat->curcell;
-
-	draw_whole_matrix(mainwin, curmat);
-	draw_change_cell_attr(mainwin, curmat, ELEMENT_MATRIX_SELECTED);
 
 	wrefresh(topwin);
 	wrefresh(botwin);
 	wrefresh(mainwin);
 
 	while ((event = wgetch(mainwin)) != 'q') {
+
+
+		if (event == KEY_RESIZE)
+			resize_windows();
+
+		draw_topwin(topwin);
+
+		draw_main_menu(mainwin, &mainmenu);
+
+
+		wrefresh(topwin);
+		wrefresh(botwin);
+		wrefresh(mainwin);
+
+		continue;
 
 		switch (event) {
 			case KEY_LEFT:
@@ -126,12 +132,13 @@ static void normal_mode(void) {
 				matrix_mvcc_right(curmat);
 				break;
 			case 'H':
-				if (curcol && curcol->right)
-					matrix_dispose_col(curmat, curcol->right);
+				if (curmat->curcol && curmat->curcol->right)
+					matrix_dispose_col(curmat, curmat->curcol->right);
 				break;
 			case 'L':
 				if (curmat)
-					matrix_add_col(curmat, curcol, curcol->right, 0, 0);
+					matrix_add_col(curmat, curmat->curcol,
+							curmat->curcol->right, 0, 0);
 				break;
 			case KEY_UP:
 			case 'k':
@@ -142,12 +149,13 @@ static void normal_mode(void) {
 				matrix_mvcc_below(curmat);
 				break;
 			case 'J':
-				if (currow && currow->below)
-					matrix_dispose_row(curmat, currow->below);
+				if (curmat->currow && curmat->currow->below)
+					matrix_dispose_row(curmat, curmat->currow->below);
 				break;
 			case 'K':
 				if (curmat)
-					matrix_add_row(curmat, currow, currow->below, 0, 0);
+					matrix_add_row(curmat, curmat->currow,
+							curmat->currow->below, 0, 0);
 				break;
 			case 'n':
 
@@ -159,16 +167,12 @@ static void normal_mode(void) {
 					curmat = Mhead;
 				}
 
-				curcol = curmat->curcol;
-				currow = curmat->currow;
 				//   curcell = curmat->curcell;
 
 				break;
 			case 'P':
 				if (curmat && curmat->left) {
 					curmat = curmat->left;
-					curcol = curmat->curcol;
-					currow = curmat->currow;
 					//   curcell = curmat->curcell;
 
 				}
@@ -177,8 +181,6 @@ static void normal_mode(void) {
 			case 'N':
 				if (curmat && curmat->right) {
 					curmat = curmat->right;
-					curcol = curmat->curcol;
-					currow = curmat->currow;
 					//   curcell = curmat->curcell;
 
 				}

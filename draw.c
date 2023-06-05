@@ -671,3 +671,90 @@ void draw_change_cell_attr(WINDOW *win, struct Matrix *mat, int attr_idx) {
 	wchgat(win, mat->curcol->width, color_schemes[SCHEME_DEFAULT][attr_idx], 0, NULL);
 
 }
+
+void draw_main_menu(WINDOW *win, struct Menu *menu) {
+
+	int ymax;
+	int cury;
+	int maxitems;
+	int itemsabove;
+	int itemsbelow;
+
+	struct Matrix *mstart, *mend;
+	struct Matrix *mat;
+
+	mat = menu->curmat;
+
+	ymax = getmaxy(win);
+
+	maxitems = (ymax + 1) / 3;
+
+	if (menu->ymax != ymax) {
+		menu->cury = (menu->curitemidx % maxitems) * 3;
+		menu->ymax = ymax;
+	}
+
+	cury = menu->cury;
+
+	itemsabove = cury / 3;
+	if (menu->totalitems > maxitems)
+		itemsbelow = maxitems - itemsabove - 1;
+	else
+		itemsbelow = menu->totalitems - itemsabove - 1;
+
+	werase(win);
+
+	wmove(win, cury, 0);
+	wattron(win, color_schemes[SCHEME_DEFAULT][ELEMENT_MAIN_INFO_SELECTED]);
+	wprintw(win, "%s", char_symbols[CHAR_PIPE]);
+
+	wmove(win, cury, 2);
+	wattron(win, color_schemes[SCHEME_DEFAULT][ELEMENT_MAIN_TITLE_SELECTED]);
+	wprintw(win, "%s", mat->name);
+
+	wmove(win, cury + 1, 0);
+	wattron(win, color_schemes[SCHEME_DEFAULT][ELEMENT_MAIN_INFO_SELECTED]);
+	wprintw(win, "%s", char_symbols[CHAR_PIPE]);
+
+	wmove(win, cury + 1, 2);
+	wprintw(win, "Rows: %d Cols: %d", mat->nrows, mat->ncols);
+
+
+	while (itemsabove > 0) {
+
+		cury -= 3;
+		mat = mat->left;
+
+		wmove(win, cury, 2);
+		wattron(win, color_schemes[SCHEME_DEFAULT][ELEMENT_MAIN_TITLE_NORMAL]);
+		wprintw(win, "%s", mat->name);
+
+		wmove(win, cury + 1, 2);
+		wattron(win, color_schemes[SCHEME_DEFAULT][ELEMENT_MAIN_INFO_NORMAL]);
+		wprintw(win, "Rows: %d Cols: %d", mat->nrows, mat->ncols);
+
+		itemsabove--;
+
+	}
+
+	mat = menu->curmat;
+	cury = menu->cury;
+
+	while (itemsbelow > 0) {
+
+		cury += 3;
+		mat = mat->right;
+
+		wmove(win, cury, 2);
+		wattron(win, color_schemes[SCHEME_DEFAULT][ELEMENT_MAIN_TITLE_NORMAL]);
+		wprintw(win, "%s", mat->name);
+
+		wmove(win, cury + 1, 2);
+		wattron(win, color_schemes[SCHEME_DEFAULT][ELEMENT_MAIN_INFO_NORMAL]);
+		wprintw(win, "Rows: %d Cols: %d", mat->nrows, mat->ncols);
+
+		itemsbelow--;
+
+	}
+
+}

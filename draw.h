@@ -135,6 +135,24 @@ struct Blueprint {
 
 };
 
+struct Menu {
+
+	int ymax;
+	int cury;
+	/*
+	 * if there are two items then totalitems will be two, and
+	 * curitemidx will be 1 if the last item is selected and 0 if
+	 * the first item is selected.
+	 * */
+	int totalitems;
+	int curitemidx;
+
+	union {
+		struct Matrix *curmat;
+		struct Stashed *curst;
+	};
+
+};
 
 void draw_init_colorschemes(void);
 void draw_topwin(WINDOW *win);
@@ -148,3 +166,4 @@ void draw_below_matrix(WINDOW *win, struct Matrix *mat,
 		struct Row *rowstart, struct Cell *cellstart, int begy);
 void draw_whole_matrix(WINDOW *win, struct Matrix *mat);
 void draw_change_cell_attr(WINDOW *win, struct Matrix *mat, int attr_idx);
+void draw_main_menu(WINDOW *win, struct Menu *menu);
