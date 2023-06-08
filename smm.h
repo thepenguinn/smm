@@ -7,4 +7,5 @@ static unsigned int mainwin_pad_horizontal = 1;
 #define MAIN_MATRIX 0
 #define MAIN_MENU   1
 
+#define KEY_RETURN  10
 #define KEY_ESCAPE  27

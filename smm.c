@@ -21,7 +21,7 @@ static void attach_matrix(struct Matrix *mattoattach,
 static void detach_matrix(struct Matrix *mattodetach);
 static void stretch_window(WINDOW *win);
 static void squeeze_window(WINDOW *win);
-static struct Matrix *matrix_mode(struct Matrix *curmat);
+static struct Matrix *matrix_mode(struct Menu *menu);
 
 static void stretch_window(WINDOW *win) {
 
@@ -134,35 +134,30 @@ static void main_mvitem_left(struct Menu *menu) {
 
 static void main_mvitem_right(struct Menu *menu) {
 
+	int maxitems;
+	int itemsbelow;
 	int itemstoright;
 
 	if (!menu->curmat) {
 		return;
 	}
 
-	itemstoright = (menu->ymax + 1) / 3;
+	maxitems = (menu->ymax + 1) / 3;
+	itemsbelow = maxitems - (menu->curitemidx % maxitems) - 1;
 
-	if (menu->curitemidx + itemstoright < menu->totalitems) {
+	if (menu->curitemidx + itemsbelow + 1 >= menu->totalitems)
+		return;
+	else if (menu->curitemidx + maxitems < menu->totalitems)
+		itemstoright = maxitems;
+	else
+		itemstoright = menu->totalitems - menu->curitemidx - 1;
 
-		menu->curitemidx += itemstoright;
+	menu->curitemidx += itemstoright;
 
-		while (itemstoright) {
+	while (itemstoright) {
 
-			menu->curmat = menu->curmat->right;
-			itemstoright--;
-
-		}
-
-	} else if (menu->totalitems % itemstoright != 0) {
-
-		menu->cury = ((menu->totalitems % itemstoright) - 1) * 3;
-
-		while (menu->curmat->right) {
-
-			menu->curmat = menu->curmat->right;
-
-		}
-		menu->curitemidx = menu->totalitems - 1;
+		menu->curmat = menu->curmat->right;
+		itemstoright--;
 
 	}
 
@@ -181,9 +176,10 @@ static void main_mvitem_right(struct Menu *menu) {
 // }
 
 
-static struct Matrix *matrix_mode(struct Matrix *curmat) {
+static struct Matrix *matrix_mode(struct Menu *menu) {
 
 	int event;
+	struct Matrix *curmat = menu->curmat;
 
 	draw_topwin(Topwin);
 	draw_whole_matrix(Mainwin, curmat);
@@ -195,6 +191,7 @@ static struct Matrix *matrix_mode(struct Matrix *curmat) {
 
 	while ((event = wgetch(Mainwin)) != 'q') {
 
+		smm_log(WARN, "matrix_mode %d", event);
 		switch (event) {
 			case KEY_LEFT:
 			case 'h':
@@ -230,22 +227,21 @@ static struct Matrix *matrix_mode(struct Matrix *curmat) {
 					matrix_add_row(curmat, curmat->currow,
 							curmat->currow->below, 0, 0);
 				break;
-//			case 'P':
-//				if (curmat && curmat->left) {
-//					curmat = curmat->left;
-//
-//				}
-//				break;
-//
-////			case 'N':
-//				if (curmat && curmat->right) {
-//					curmat = curmat->right;
-//					//   curcell = curmat->curcell;
-//
-//				}
-//				break;
-//
-			case 10:
+			case 'p':
+				if (curmat && curmat->left) {
+					menu->curmat = curmat = curmat->left;
+					menu->curitemidx -= 1;
+				}
+				break;
+
+			case 'n':
+				if (curmat && curmat->right) {
+					menu->curmat = curmat = curmat->right;
+					menu->curitemidx += 1;
+				}
+				break;
+
+			case KEY_ESCAPE:
 				return curmat;
 				break;
 			case KEY_RESIZE:
@@ -291,22 +287,27 @@ static void normal_mode(void) {
 
 	while ((event = wgetch(Mainwin)) != 'q') {
 
+		smm_log(WARN, "normal_mode %d", event);
 		switch (event) {
 
+			case KEY_RIGHT:
 			case 'l':
 				if (mainmenu.curmat)
 					main_mvitem_right(&mainmenu);
 				break;
+			case KEY_LEFT:
 			case 'h':
 				if (mainmenu.curmat)
 					main_mvitem_left(&mainmenu);
 				break;
+			case KEY_UP:
 			case 'k':
 				if (mainmenu.curmat && mainmenu.curmat->left) {
 					mainmenu.curmat = mainmenu.curmat->left;
 					mainmenu.curitemidx -= 1;
 				}
 				break;
+			case KEY_DOWN:
 			case 'j':
 				if (mainmenu.curmat && mainmenu.curmat->right) {
 					mainmenu.curmat = mainmenu.curmat->right;
@@ -327,7 +328,7 @@ static void normal_mode(void) {
 				mainmenu.totalitems += 1;
 
 				break;
-			case 10:
+			case KEY_RETURN:
 				if (mainmenu.curmat) {
 					/* TODO: clean this */
 					wmove(Mainwin, mainmenu.cury, 0);
@@ -336,24 +337,27 @@ static void normal_mode(void) {
 					wprintw(Mainwin, " ");
 					wrefresh(Mainwin);
 					squeeze_window(Mainwin);
-					// resize_windows();
-					mainmenu.curmat = matrix_mode(mainmenu.curmat);
+
+					matrix_mode(&mainmenu);
 					stretch_window(Mainwin);
 				}
 				break;
 			case KEY_RESIZE:
 				resize_windows();
+				draw_topwin(Topwin);
 				stretch_window(Mainwin);
+				wrefresh(Topwin);
 				break;
 
 
 		}
 
+
+
 		draw_main_menu(Mainwin, &mainmenu);
 
 		draw_page_hints(Botwin, &mainmenu);
 
-		wrefresh(Topwin);
 		wrefresh(Botwin);
 		wrefresh(Mainwin);
 
@@ -428,6 +432,12 @@ int main (void) {
 
 	create_windows();
 
+	/*
+	 * TODO: choose between arrowkeys or lightning speed escape
+	 * capture, dumbass !!
+	 * */
+	keypad(Mainwin, TRUE);
+	ESCDELAY = 10;
 	stretch_window(Mainwin);
 	normal_mode();
 
