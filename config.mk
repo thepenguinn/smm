@@ -9,8 +9,9 @@ LDFLAGS = `pkg-config --libs-only-L ncursesw`
 
 LDLIBS = `pkg-config --libs-only-l ncursesw`
 
+CFLAGS =
 CFLAGS += -std=c99 -Wpedantic -pedantic-errors
-CFLAGS += -Werror
+#CFLAGS += -Werror
 CFLAGS += -Wall
 CFLAGS += -Wextra
 CFLAGS += -Waggregate-return
