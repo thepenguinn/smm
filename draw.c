@@ -56,10 +56,12 @@ static const char *char_symbols[CHAR_END] = {
 	[CHAR_EDGE_LEFT]        = "├",
 	[CHAR_MINUS]            = "─",
 	[CHAR_PIPE]             = "│",
-	[CHAR_CROSS]            = "┼"
+	[CHAR_CROSS]            = "┼",
+	[CHAR_DOT]              = "•"
 };
 
 /*
+••••••••••••••••••••••••
 ─ ━ │ ┃ ┄ ┅ ┆ ┇ ┈ ┉ ┊ ┋ ┌ ┍ ┎ ┏
 U+251x    ┐ ┑ ┒ ┓ └ ┕ ┖ ┗ ┘ ┙ ┚ ┛ ├ ┝ ┞ ┟
 U+252x    ┠ ┡ ┢ ┣ ┤ ┥ ┦ ┧ ┨ ┩ ┪ ┫ ┬ ┭ ┮ ┯
@@ -672,7 +674,45 @@ void draw_change_cell_attr(WINDOW *win, struct Matrix *mat, int attr_idx) {
 
 }
 
+void draw_page_hints(WINDOW *win, struct Menu *menu) {
+
+	int maxitems;
+	int leftpages, rightpages;
+
+	if (!menu->curmat)
+		return;
+
+	maxitems = (menu->ymax + 1) / 3;
+
+	leftpages = menu->curitemidx / maxitems;
+	rightpages = ((menu->totalitems + maxitems - 1) / maxitems) - leftpages - 1;
+
+	wmove(win, 0, 0);
+	wclrtoeol(win);
+
+	wattron(win, color_schemes[SCHEME_DEFAULT][ELEMENT_DOTS_NORMAL]);
+	while (leftpages) {
+		wprintw(win, "%s", char_symbols[CHAR_DOT]);
+		leftpages--;
+	}
+
+	wattron(win, color_schemes[SCHEME_DEFAULT][ELEMENT_DOTS_SELECTED]);
+	wprintw(win, "%s", char_symbols[CHAR_DOT]);
+
+	wattron(win, color_schemes[SCHEME_DEFAULT][ELEMENT_DOTS_NORMAL]);
+	while (rightpages) {
+		wprintw(win, "%s", char_symbols[CHAR_DOT]);
+		rightpages--;
+	}
+
+}
+
+
 void draw_main_menu(WINDOW *win, struct Menu *menu) {
+
+	/*
+	 * TODO: clean menu->cury and menu->ymax
+	 * */
 
 	int ymax;
 	int cury;
@@ -683,24 +723,35 @@ void draw_main_menu(WINDOW *win, struct Menu *menu) {
 	struct Matrix *mstart, *mend;
 	struct Matrix *mat;
 
+	if (!menu) {
+		smm_log(WARN, "draw_main_menu was called with a NULL menu");
+		return;
+	}
+
 	mat = menu->curmat;
+
+	if (!mat)
+		return;
 
 	ymax = getmaxy(win);
 
+	if (ymax < 3) {
+		return;
+	}
+
 	maxitems = (ymax + 1) / 3;
 
-	if (menu->ymax != ymax) {
-		menu->cury = (menu->curitemidx % maxitems) * 3;
-		menu->ymax = ymax;
-	}
+	menu->cury = (menu->curitemidx % maxitems) * 3;
+	menu->ymax = ymax;
 
 	cury = menu->cury;
 
 	itemsabove = cury / 3;
-	if (menu->totalitems > maxitems)
+
+	if (menu->totalitems - menu->curitemidx >= maxitems - itemsabove)
 		itemsbelow = maxitems - itemsabove - 1;
 	else
-		itemsbelow = menu->totalitems - itemsabove - 1;
+		itemsbelow = menu->totalitems - menu->curitemidx - 1;
 
 	werase(win);
 

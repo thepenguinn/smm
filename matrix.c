@@ -39,6 +39,7 @@ static void dispose_mid_row(struct Row *rowabove,
 		struct Row *rowbelow, struct Row *rowtod);
 static void dispose_last_row(struct Matrix *mat, struct Row *rowtod);
 
+static int Gnum = 0;
 
 // guess ill go to mars;
 
@@ -1011,10 +1012,12 @@ struct Matrix *matrix_create(int nrows, int ncols, int value) {
 	}
 
 	if (mat) {
+
 		mat->width = 0;
 		mat->ncols = 0;
 		mat->nrows = 0;
 		mat->right = mat->left = NULL;
+
 		prerowhead = matrix_add_row(mat, NULL, NULL, ncols, value);
 		for(i=1;i<nrows;i++) {
 			prerowhead = matrix_add_row(mat, prerowhead, NULL, 0, value);
@@ -1027,7 +1030,8 @@ struct Matrix *matrix_create(int nrows, int ncols, int value) {
 		mat->xmax = mat->ymax = 0;
 
 		mat->selected = 0;
-		sprintf(mat->name, "Matrix");
+		sprintf(mat->name, "Matrix %0*d", 3, Gnum);
+		Gnum++;
 
 	} else {
 		exit(EXIT_FAILURE);

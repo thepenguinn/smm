@@ -102,6 +102,7 @@ enum SeperatorChars {
 	CHAR_MINUS,
 	CHAR_PIPE,
 	CHAR_CROSS,
+	CHAR_DOT,
 	CHAR_END,
 };
 
@@ -167,3 +168,4 @@ void draw_below_matrix(WINDOW *win, struct Matrix *mat,
 void draw_whole_matrix(WINDOW *win, struct Matrix *mat);
 void draw_change_cell_attr(WINDOW *win, struct Matrix *mat, int attr_idx);
 void draw_main_menu(WINDOW *win, struct Menu *menu);
+void draw_page_hints(WINDOW *win, struct Menu *menu);

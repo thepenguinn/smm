@@ -19,7 +19,39 @@ static void resize_windows(void);
 static void attach_matrix(struct Matrix *mattoattach,
 		struct Matrix *leftmat, struct Matrix *rightmat);
 static void detach_matrix(struct Matrix *mattodetach);
+static void stretch_window(WINDOW *win);
+static void squeeze_window(WINDOW *win);
+static struct Matrix *matrix_mode(struct Matrix *curmat);
 
+static void stretch_window(WINDOW *win) {
+
+	int ymax, xmax;
+	int begy, begx;
+
+	getmaxyx(win, ymax, xmax);
+	getbegyx(win, begy, begx);
+
+	mvwin(win, begy, begx - 2);
+	wresize(win, ymax, xmax + 4);
+
+}
+
+static void squeeze_window(WINDOW *win) {
+
+	int ymax, xmax;
+	int begy, begx;
+
+	getmaxyx(win, ymax, xmax);
+	getbegyx(win, begy, begx);
+
+	// werase(stdscr);
+	// wrefresh(stdscr);
+	wresize(win, ymax, xmax - 4);
+	mvwin(win, begy, begx + 2);
+
+}
+
+static WINDOW *Topwin, *Mainwin, *Botwin;
 
 /*
  * need this one to change cursor shape *
@@ -75,52 +107,93 @@ static void detach_matrix(struct Matrix *mattodetach) {
 
 }
 
+static void main_mvitem_left(struct Menu *menu) {
 
-static void normal_mode(void) {
+	int itemstoleft;
 
-	int event;
-	struct Matrix *curmat = NULL;
-	struct Menu mainmenu;
-	int i;
-
-
-	draw_topwin(topwin);
-
-	mainmenu.ymax = 0;
-	mainmenu.cury = 0;
-	mainmenu.totalitems = 0;
-	mainmenu.curitemidx = 0;
-	mainmenu.curmat = NULL;
-
-	Mhead = Mtail = curmat = matrix_create(3, 3, 256);
-	mainmenu.curmat = curmat;
-	mainmenu.totalitems += 1;
-
-	for (i = 0;i < 10; i++) {
-		attach_matrix(matrix_create(3, 3, i), Mtail, NULL);
-		mainmenu.totalitems += 1;
+	if (!menu->curmat) {
+		return;
 	}
 
-	wrefresh(topwin);
-	wrefresh(botwin);
-	wrefresh(mainwin);
+	itemstoleft = (menu->ymax + 1) / 3;
 
-	while ((event = wgetch(mainwin)) != 'q') {
+	if (menu->curitemidx - itemstoleft >= 0) {
+
+		menu->curitemidx -= itemstoleft;
+
+		while (itemstoleft) {
+
+			menu->curmat = menu->curmat->left;
+			itemstoleft--;
+
+		}
+
+	}
+
+}
+
+static void main_mvitem_right(struct Menu *menu) {
+
+	int itemstoright;
+
+	if (!menu->curmat) {
+		return;
+	}
+
+	itemstoright = (menu->ymax + 1) / 3;
+
+	if (menu->curitemidx + itemstoright < menu->totalitems) {
+
+		menu->curitemidx += itemstoright;
+
+		while (itemstoright) {
+
+			menu->curmat = menu->curmat->right;
+			itemstoright--;
+
+		}
+
+	} else if (menu->totalitems % itemstoright != 0) {
+
+		menu->cury = ((menu->totalitems % itemstoright) - 1) * 3;
+
+		while (menu->curmat->right) {
+
+			menu->curmat = menu->curmat->right;
+
+		}
+		menu->curitemidx = menu->totalitems - 1;
+
+	}
+
+}
+
+// static void main_mvitem_above(struct Menu *menu) {
+//
+// 	if (menu->curmat->left) {
+//
+//
+//
+//
+// 	}
+//
+//
+// }
 
 
-		if (event == KEY_RESIZE)
-			resize_windows();
+static struct Matrix *matrix_mode(struct Matrix *curmat) {
 
-		draw_topwin(topwin);
+	int event;
 
-		draw_main_menu(mainwin, &mainmenu);
+	draw_topwin(Topwin);
+	draw_whole_matrix(Mainwin, curmat);
+	draw_change_cell_attr(Mainwin, curmat, ELEMENT_MATRIX_SELECTED);
 
+	wrefresh(Topwin);
+	wrefresh(Botwin);
+	wrefresh(Mainwin);
 
-		wrefresh(topwin);
-		wrefresh(botwin);
-		wrefresh(mainwin);
-
-		continue;
+	while ((event = wgetch(Mainwin)) != 'q') {
 
 		switch (event) {
 			case KEY_LEFT:
@@ -157,50 +230,135 @@ static void normal_mode(void) {
 					matrix_add_row(curmat, curmat->currow,
 							curmat->currow->below, 0, 0);
 				break;
-			case 'n':
-
-				if (curmat) {
-					attach_matrix(matrix_create(3, 3, 256), curmat, curmat->right);
-					curmat = curmat->right;
-				} else {
-					attach_matrix(matrix_create(3, 3, 256), curmat, NULL);
-					curmat = Mhead;
-				}
-
-				//   curcell = curmat->curcell;
-
+//			case 'P':
+//				if (curmat && curmat->left) {
+//					curmat = curmat->left;
+//
+//				}
+//				break;
+//
+////			case 'N':
+//				if (curmat && curmat->right) {
+//					curmat = curmat->right;
+//					//   curcell = curmat->curcell;
+//
+//				}
+//				break;
+//
+			case 10:
+				return curmat;
 				break;
-			case 'P':
-				if (curmat && curmat->left) {
-					curmat = curmat->left;
-					//   curcell = curmat->curcell;
-
-				}
-				break;
-
-			case 'N':
-				if (curmat && curmat->right) {
-					curmat = curmat->right;
-					//   curcell = curmat->curcell;
-
-				}
-				break;
-
 			case KEY_RESIZE:
 				resize_windows();
+				draw_topwin(Topwin);
+				wrefresh(Topwin);
 				break;
 
 		}
 
-		draw_topwin(topwin);
-		draw_whole_matrix(mainwin, curmat);
+		draw_whole_matrix(Mainwin, curmat);
+		draw_change_cell_attr(Mainwin, curmat, ELEMENT_MATRIX_SELECTED);
 
-		draw_change_cell_attr(mainwin, curmat, ELEMENT_MATRIX_SELECTED);
+		wrefresh(Botwin);
+		wrefresh(Mainwin);
 
-		wrefresh(topwin);
-		wrefresh(botwin);
-		wrefresh(mainwin);
 	}
+
+	return curmat;
+
+}
+
+static void normal_mode(void) {
+
+	int event;
+	struct Menu mainmenu;
+
+	mainmenu.ymax = 0;
+	mainmenu.cury = 0;
+	mainmenu.totalitems = 0;
+	mainmenu.curitemidx = 0;
+	mainmenu.curmat = NULL;
+
+	draw_topwin(Topwin);
+
+	draw_main_menu(Mainwin, &mainmenu);
+
+	draw_page_hints(Botwin, &mainmenu);
+
+	wrefresh(Topwin);
+	wrefresh(Botwin);
+	wrefresh(Mainwin);
+
+	while ((event = wgetch(Mainwin)) != 'q') {
+
+		switch (event) {
+
+			case 'l':
+				if (mainmenu.curmat)
+					main_mvitem_right(&mainmenu);
+				break;
+			case 'h':
+				if (mainmenu.curmat)
+					main_mvitem_left(&mainmenu);
+				break;
+			case 'k':
+				if (mainmenu.curmat && mainmenu.curmat->left) {
+					mainmenu.curmat = mainmenu.curmat->left;
+					mainmenu.curitemidx -= 1;
+				}
+				break;
+			case 'j':
+				if (mainmenu.curmat && mainmenu.curmat->right) {
+					mainmenu.curmat = mainmenu.curmat->right;
+					mainmenu.curitemidx += 1;
+				}
+				break;
+			case 'N':
+
+				if (mainmenu.curmat) {
+					attach_matrix(matrix_create(3, 3, 256),
+							mainmenu.curmat, mainmenu.curmat->right);
+					mainmenu.curmat = mainmenu.curmat->right;
+					mainmenu.curitemidx += 1;
+				} else {
+					attach_matrix(matrix_create(3, 3, 256), NULL, NULL);
+					mainmenu.curmat = Mhead;
+				}
+				mainmenu.totalitems += 1;
+
+				break;
+			case 10:
+				if (mainmenu.curmat) {
+					/* TODO: clean this */
+					wmove(Mainwin, mainmenu.cury, 0);
+					wprintw(Mainwin, " ");
+					wmove(Mainwin, mainmenu.cury + 1, 0);
+					wprintw(Mainwin, " ");
+					wrefresh(Mainwin);
+					squeeze_window(Mainwin);
+					// resize_windows();
+					mainmenu.curmat = matrix_mode(mainmenu.curmat);
+					stretch_window(Mainwin);
+				}
+				break;
+			case KEY_RESIZE:
+				resize_windows();
+				stretch_window(Mainwin);
+				break;
+
+
+		}
+
+		draw_main_menu(Mainwin, &mainmenu);
+
+		draw_page_hints(Botwin, &mainmenu);
+
+		wrefresh(Topwin);
+		wrefresh(Botwin);
+		wrefresh(Mainwin);
+
+	}
+
 }
 
 static void resize_windows(void) {
@@ -212,15 +370,15 @@ static void resize_windows(void) {
 	werase(stdscr);
 	wrefresh(stdscr);
 
-	wresize(topwin, topwin_nlines, xmax - (2 * edge_pad_vertical));
+	wresize(Topwin, topwin_nlines, xmax - (2 * edge_pad_vertical));
 
-	wresize(mainwin, ymax - (topwin_nlines + botwin_nlines)
+	wresize(Mainwin, ymax - (topwin_nlines + botwin_nlines)
 			- (2 * edge_pad_horizontal) - (2 * mainwin_pad_horizontal),
 			xmax - (2 * edge_pad_vertical));
 
-	wresize(botwin, botwin_nlines, xmax - (2 * edge_pad_vertical));
+	wresize(Botwin, botwin_nlines, xmax - (2 * edge_pad_vertical));
 
-	mvwin(botwin, ymax - botwin_nlines - edge_pad_horizontal, edge_pad_vertical);
+	mvwin(Botwin, ymax - botwin_nlines - edge_pad_horizontal, edge_pad_vertical);
 
 }
 
@@ -230,18 +388,18 @@ static void create_windows(void) {
 
 	getmaxyx(stdscr, ymax, xmax);
 
-	topwin = newwin(topwin_nlines,
+	Topwin = newwin(topwin_nlines,
 			xmax - (2 * edge_pad_vertical),
 			edge_pad_horizontal,
 			edge_pad_vertical);
 
-	mainwin = newwin(ymax - (topwin_nlines + botwin_nlines)
+	Mainwin = newwin(ymax - (topwin_nlines + botwin_nlines)
 			- (2 * edge_pad_horizontal) - (2 * mainwin_pad_horizontal),
 			xmax - (2 * edge_pad_vertical),
 			edge_pad_horizontal + topwin_nlines + mainwin_pad_horizontal,
 			edge_pad_vertical);
 
-	botwin = newwin(botwin_nlines,
+	Botwin = newwin(botwin_nlines,
 			xmax - (2 * edge_pad_vertical),
 			ymax - botwin_nlines - edge_pad_horizontal,
 			edge_pad_vertical);
@@ -255,6 +413,7 @@ int main (void) {
 
 	initscr();
 	clear();
+	cbreak();
 	noecho();
 	keypad(stdscr, TRUE);
 
@@ -269,6 +428,7 @@ int main (void) {
 
 	create_windows();
 
+	stretch_window(Mainwin);
 	normal_mode();
 
 	endwin();
