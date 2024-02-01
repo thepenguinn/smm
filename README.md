@@ -1,5 +1,6 @@
-# Simple Matrix Multiplier
+# Simple(Stupid) Matrix Multiplier
 
-Simple matrix multiplier is menu driven, all things matrix.
+Simple matrix multiplier is a tui C program for all things matrix.
+(At least that's what its trying to be)
 
-Rest of the README #wip
+Still in wip though
