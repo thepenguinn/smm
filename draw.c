@@ -111,8 +111,9 @@ static int16_t color_pairs[PAIR_END][2] = {
 static int color_schemes[SCHEME_END][ELEMENT_END] = {
 	[SCHEME_DEFAULT] = {
 		[ELEMENT_TITLE]                   = ColorPair(PAIR_BRT_YELLOW_BRT_PINK),
-		[ELEMENT_SECTION_NORMAL]          = ColorPair(PAIR_DIM_GREY_DEFAULT_BG),
-		[ELEMENT_SECTION_SELECTED]        = ColorPair(PAIR_BRT_GREY_DEFAULT_BG),
+		[ELEMENT_SECTION_NORMAL]          = ColorPair(PAIR_BRT_GREY_DEFAULT_BG),
+		[ELEMENT_SECTION_SELECTED]        = ColorPair(PAIR_DIM_WHITE_DEFAULT_BG),
+		[ELEMENT_SECTION_SEPERATOR]       = ColorPair(PAIR_DIM_GREY_DEFAULT_BG),
 		[ELEMENT_MAIN_TITLE_NORMAL]       = ColorPair(PAIR_BRT_WHITE_DEFAULT_BG),
 		[ELEMENT_MAIN_TITLE_SELECTED]     = ColorPair(PAIR_BRT_PINK_DEFAULT_BG),
 		[ELEMENT_MAIN_INFO_NORMAL]        = ColorPair(PAIR_DIM_WHITE_DEFAULT_BG),
@@ -654,7 +655,21 @@ void draw_topwin(WINDOW *win) {
 	wprintw(win, "%s", name);
 	wattroff(win, A_BOLD);
 	wmove(win, 2, 0);
-	wprintw(win, "%s", "local | stashed | news");
+
+	wattron(win, color_schemes[SCHEME_DEFAULT][ELEMENT_SECTION_SELECTED]);
+	wprintw(win, "%s", "0 local");
+
+	wattron(win, color_schemes[SCHEME_DEFAULT][ELEMENT_SECTION_SEPERATOR]);
+	wprintw(win, "%s", " | ");
+
+	wattron(win, color_schemes[SCHEME_DEFAULT][ELEMENT_SECTION_NORMAL]);
+	wprintw(win, "%s", "0 stashed");
+
+	wattron(win, color_schemes[SCHEME_DEFAULT][ELEMENT_SECTION_SEPERATOR]);
+	wprintw(win, "%s", " | ");
+
+	wattron(win, color_schemes[SCHEME_DEFAULT][ELEMENT_SECTION_NORMAL]);
+	wprintw(win, "%s", "0 wip");
 
 }
 
